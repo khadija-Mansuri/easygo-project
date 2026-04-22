@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="container-fluid bg-primary py-5 mb-5 hero-header">
+    <div class="container py-5">
+        <h1 class="display-3 text-white mb-3 animated slideInDown">Login</h1>
+    </div>
+</div>
+
+<!-- Login Form -->
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-lg p-4 mb-5 bg-white rounded">
+
+                <h3 class="text-center mb-4">Login to Your Account</h3>
+{% if messages %}
+  {% for message in messages %}
+    <script>
+        alert("{{ message }}");
+    </script>
+  {% endfor %}
+{% endif %}
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="form-group mb-3">
+                        <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <input type="password" name="password" class="form-control" placeholder="Password" required>
+                    </div>
+<div class="text-end mb-3">
+    <a href="{% url 'forgot_password' %}" class="small text-muted">Forgot Password?</a>
+</div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        Login
+                    </button>
+
+                </form>
+
+                <p class="text-center mt-3">
+                    Don't have an account?
+                    <a href="{% url 'register' %}" class="text-primary">Register</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

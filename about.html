@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}EasyGo - About Us{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-breadcrumb">
+    <div class="container text-center py-5" style="max-width: 900px;">
+        <h3 class="text-white display-3 mb-4">About Us</h3>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">Pages</a></li>
+            <li class="breadcrumb-item active text-white">About</li>
+        </ol>
+    </div>
+</div>
+<div class="container-fluid about py-5">
+    <div class="container py-5">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-5">
+                <div class="h-100" style="border: 50px solid; border-color: transparent #13357B transparent #13357B;">
+                    <img src="{% static 'img/about-img.jpg' %}" class="img-fluid w-100 h-100" alt="EasyGo Travels">
+                </div>
+            </div>
+            <div class="col-lg-7" style="background: linear-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .8)), url({% static 'img/about-img-1.png' %});">
+                <h5 class="section-about-title pe-3">Why EasyGo?</h5>
+                <h1 class="mb-4">Welcome to <span class="text-primary">EasyGo</span></h1>
+                <p class="mb-4">At EasyGo, we don't just book tickets; we craft complete travel experiences. Based in Ahmedabad, we specialize in curated packages ranging from Spiritual journeys to high-octane Adventure tours. Our platform is built on transparency, ensuring every traveler gets professional service with a personal touch.</p>
+                <p class="mb-4">What truly sets us apart is our <strong>Smart Pricing</strong> and <strong>Trust Protocol</strong>. Whether you are a solo explorer or traveling with a massive group, our system ensures you get the best value automatically. From Aadhar-verified passenger logs to instant GST-compliant invoices, we handle the technicalities so you can focus on the memories.</p>
+                <div class="row gy-2 gx-4 mb-4">
+                    <div class="col-sm-6">
+                        <p class="mb-0"><i class="fa fa-check text-primary me-2"></i>Group Discounts (Up to 15%)</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-0"><i class="fa fa-check text-primary me-2"></i>100% Verified Traveler Reviews</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-0"><i class="fa fa-check text-primary me-2"></i>Automated GST Tax Invoices</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-0"><i class="fa fa-check text-primary me-2"></i>Smart Waitlist Auto-Promotion</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-0"><i class="fa fa-check text-primary me-2"></i>Multi-Mode (Flight/Bus/Bike)</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="mb-0"><i class="fa fa-check text-primary me-2"></i>24/7 Booking Support</p>
+                    </div>
+                </div>
+                <a class="btn btn-primary rounded-pill py-3 px-5 mt-2" href="{% url 'packages' %}">Explore Packages</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid pb-5">
+    <div class="container pb-5">
+        <div class="mx-auto text-center mb-5" style="max-width: 900px;">
+            <h5 class="section-title px-3">The EasyGo Edge</h5>
+            <h1 class="mb-0">Why We Are Different</h1>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card border-primary h-100 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fa fa-users fa-3x text-primary mb-3"></i>
+                        <h4>Volume Savings</h4>
+                        <p>Unlike major platforms that charge per seat, we offer automatic tiered discounts for larger groups and families.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-primary h-100 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fa fa-shield-alt fa-3x text-primary mb-3"></i>
+                        <h4>Verified Trust</h4>
+                        <p>Only users who have completed a journey can leave feedback. You get 100% authentic reviews every time.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-primary h-100 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fa fa-file-invoice-dollar fa-3x text-primary mb-3"></i>
+                        <h4>Pro Billing</h4>
+                        <p>Receive instant, professional PDF invoices with complete price breakdowns and cancellation policies.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid guide py-5">
+    <div class="container py-5">
+        <div class="mx-auto text-center mb-5" style="max-width: 900px;">
+            <h5 class="section-title px-3">Travel Guide</h5>
+            <h1 class="mb-0">Meet Our Experts</h1>
+        </div>
+        <div class="row g-4">
+            {% for guide in guides %}
+            <div class="col-md-6 col-lg-3">
+                <div class="guide-item">
+                    <div class="guide-img">
+                        <div class="guide-img-efects">
+                            <img src="{% static guide.image %}" class="img-fluid w-100 rounded-top" alt="{{ guide.name }}">
+                        </div>
+                        <div class="guide-icon rounded-pill p-2">
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="{{ guide.facebook }}"><i class="fab fa-facebook-f"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="{{ guide.twitter }}"><i class="fab fa-twitter"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="{{ guide.instagram }}"><i class="fab fa-instagram"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="{{ guide.linkedin }}"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                    <div class="guide-title text-center rounded-bottom p-4">
+                        <div class="guide-title-inner">
+                            <h4 class="mt-3">{{ guide.name }}</h4>
+                            <p class="mb-0">{{ guide.designation }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-md-6 col-lg-4">
+                <div class="guide-item">
+                    <div class="guide-img">
+                        <div class="guide-img-efects">
+                            <img src="{% static 'img/guide-1.jpg' %}" class="img-fluid w-100 rounded-top" alt="Arshad Pirzada">
+                        </div>
+                        <div class="guide-icon rounded-pill p-2">
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-instagram"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                    <div class="guide-title text-center rounded-bottom p-4">
+                        <div class="guide-title-inner">
+                            <h4 class="mt-3">Arshad Pirzada</h4>
+                            <p class="mb-0">Founder & CEO</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="guide-item">
+                    <div class="guide-img">
+                        <div class="guide-img-efects">
+                            <img src="{% static 'img/guide-2.jpg' %}" class="img-fluid w-100 rounded-top" alt="Pathan Aksha">
+                        </div>
+                        <div class="guide-icon rounded-pill p-2">
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-instagram"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                    <div class="guide-title text-center rounded-bottom p-4">
+                        <div class="guide-title-inner">
+                            <h4 class="mt-3">Pathan Aksha</h4>
+                            <p class="mb-0">Operations Manager</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="guide-item">
+                    <div class="guide-img">
+                        <div class="guide-img-efects">
+                            <img src="{% static 'img/guide-3.jpg' %}" class="img-fluid w-100 rounded-top" alt="Mansuri Khadija">
+                        </div>
+                        <div class="guide-icon rounded-pill p-2">
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-instagram"></i></a>
+                            <a class="btn btn-square btn-primary rounded-circle mx-1" href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                    <div class="guide-title text-center rounded-bottom p-4">
+                        <div class="guide-title-inner">
+                            <h4 class="mt-3">Mansuri Khadija</h4>
+                            <p class="mb-0">Tour Strategy Expert</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

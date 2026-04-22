@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - Travela{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-profile-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.1);
+    }
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px 15px 0 0;
+        margin: -30px -30px 30px -30px;
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        margin: 0 auto 15px;
+        overflow: hidden;
+    }
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 10px 15px;
+        transition: all 0.3s;
+    }
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    .photo-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 10px;
+        border: 2px dashed #dee2e6;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }
+    .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .photo-preview .placeholder {
+        color: #adb5bd;
+        text-align: center;
+    }
+    .photo-preview .placeholder i {
+        font-size: 48px;
+        display: block;
+        margin-bottom: 10px;
+    }
+    .remove-photo {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .photo-preview:hover .remove-photo {
+        opacity: 1;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+        color: white;
+    }
+    .info-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .aadhar-input-wrapper {
+        position: relative;
+    }
+    .aadhar-input-wrapper .form-control {
+        padding-left: 40px;
+    }
+    .aadhar-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="edit-profile-container">
+        <div class="profile-header text-center">
+            <h2 class="mb-3">Edit Profile</h2>
+            <p class="mb-0">Update your personal information and Aadhar details</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" id="editProfileForm">
+            {% csrf_token %}
+            
+            <!-- Profile Photo -->
+            <div class="text-center mb-4">
+                <div class="profile-avatar mx-auto">
+                    <img src="{{ user.get_profile_photo_url }}" alt="Profile Photo" id="profilePhotoPreview">
+                </div>
+                <div class="mt-3">
+                    <label for="{{ form.profile_photo.id_for_label }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fa fa-camera me-2"></i>Change Photo
+                    </label>
+                    {{ form.profile_photo }}
+                </div>
+                {% if form.profile_photo.errors %}
+                    <div class="text-danger mt-2">{{ form.profile_photo.errors }}</div>
+                {% endif %}
+                <div class="info-text">
+                    <i class="fa fa-info-circle"></i> Max size: 2MB. Allowed: JPG, JPEG, PNG, GIF
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Personal Information -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">Personal Information</h5>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email Address *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone Number *</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="invalid-feedback d-block">{{ form.phone.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">Address Information</h5>
+                    
+                    <div class="form-group">
+                        <label class="form-label">City *</label>
+                        {{ form.city }}
+                        {% if form.city.errors %}
+                            <div class="invalid-feedback d-block">{{ form.city.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">State *</label>
+                        {{ form.state }}
+                        {% if form.state.errors %}
+                            <div class="invalid-feedback d-block">{{ form.state.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Aadhar Information -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3">Identity Proof</h5>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle me-2"></i>
+                        Aadhar card details are required for booking confirmation and verification purposes.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Aadhar Card Number</label>
+                        <div class="aadhar-input-wrapper">
+                            <i class="fa fa-id-card aadhar-icon"></i>
+                            {{ form.aadhar_number }}
+                        </div>
+                        {% if form.aadhar_number.errors %}
+                            <div class="invalid-feedback d-block">{{ form.aadhar_number.errors }}</div>
+                        {% endif %}
+                        <div class="info-text">
+                            Enter 12-digit Aadhar number without spaces or hyphens
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-save me-2">
+                    <i class="fa fa-save me-2"></i>Save Changes
+                </button>
+                <a href="{% url 'profile' %}" class="btn btn-cancel">
+                    <i class="fa fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript for photo preview -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile photo preview
+    const photoInput = document.getElementById('{{ form.profile_photo.id_for_label }}');
+    const photoPreview = document.getElementById('profilePhotoPreview');
+    
+    if (photoInput) {
+        photoInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                }
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+    
+    // Format Aadhar number as user types (optional)
+    const aadharInput = document.getElementById('{{ form.aadhar_number.id_for_label }}');
+    if (aadharInput) {
+        aadharInput.addEventListener('input', function(e) {
+            // Remove any non-digit characters
+            this.value = this.value.replace(/[^\d]/g, '');
+            
+            // Limit to 12 digits
+            if (this.value.length > 12) {
+                this.value = this.value.slice(0, 12);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

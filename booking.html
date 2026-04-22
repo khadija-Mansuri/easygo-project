@@ -1,0 +1,875 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Travela - Online Booking{% endblock %}
+
+{% block extra_css %}
+<style>
+    .price-breakdown {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    .total-price {
+        font-size: 24px;
+        color: #28a745;
+        font-weight: bold;
+    }
+    .seat-warning {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    .vehicle-info {
+        background: #e3f2fd;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    .vehicle-limit-badge {
+        background: #ffc107;
+        color: #000;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-left: 10px;
+    }
+    .package-type-info {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+    .datetime-display {
+        background: #e9ecef;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    .passenger-form {
+        background: #f8f9fa;
+        border-left: 3px solid #007bff;
+        transition: all 0.3s ease;
+    }
+    .passenger-form:hover {
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card-header {
+        font-weight: 600;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    .btn-outline-primary {
+        border-width: 2px;
+    }
+    .btn-outline-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,123,255,0.2);
+    }
+    .countdown-timer {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .countdown-number {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0 10px;
+    }
+    .countdown-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+    .btn-waiting {
+        background: #17a2b8;
+        color: white;
+        border: none;
+    }
+    .btn-waiting:hover {
+        background: #138496;
+        color: white;
+    }
+    .waiting-info-box {
+        background: #e1f5fe;
+        border-left: 4px solid #0288d1;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .waiting-badge {
+        background: #17a2b8;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-breadcrumb">
+    <div class="container text-center py-5" style="max-width: 900px;">
+        <h3 class="text-white display-3 mb-4">Online Booking</h3>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">Pages</a></li>
+            <li class="breadcrumb-item active text-white">Online Booking</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-fluid booking py-5">
+    <div class="container py-5">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6">
+                <h5 class="section-booking-title pe-3">Booking</h5>
+                <h1 class="text-white mb-4">Online Booking</h1>
+
+                {% if package %}
+                <div class="package-details bg-white p-4 rounded">
+                    <h3>{{ package.title }}</h3>
+                    <p><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ package.location }}</p>
+                    <p><i class="fa fa-clock text-primary me-2"></i>{{ package.duration }}</p>
+                    <p><i class="fa fa-calendar text-primary me-2"></i>{{ package.triptime|date:"d M Y, h:i A" }}</p>
+                    <p><i class="fa fa-tag text-primary me-2"></i>Category: <span class="badge bg-info">{{ package.category }}</span></p>
+                    <p><i class="fa fa-users text-primary me-2"></i>Package Max: {{ package.max_persons }} persons</p>
+
+                    <!-- Trip Status Badge -->
+                    {% with status=package.get_trip_status %}
+                    <div class="mt-2 mb-3">
+                        <span class="badge {{ status.badge_class }} px-3 py-2">
+                            <i class="fa {{ status.icon }} me-2"></i>{{ status.message }}
+                        </span>
+                    </div>
+                    {% endwith %}
+
+                    <div class="vehicle-info">
+                        <i class="fa fa-car text-primary me-2"></i>
+                        <strong>Vehicle Capacity:</strong>
+                        <ul class="mt-2">
+                            <li>Car: Maximum 7 persons</li>
+                            <li>Bus: Maximum 50 persons</li>
+                            <li>Train: Maximum 100 persons</li>
+                            <li>Flight: Maximum 200 persons</li>
+                            <li>Bike: Maximum 2 persons</li>
+                        </ul>
+                    </div>
+
+                    <!-- Dynamic Seat Info Section -->
+                    <div id="seatInfoContainer" class="seat-info {% if package.available_seats <= 0 %}bg-warning{% else %}bg-light{% endif %} p-2 rounded">
+                        <i class="fa fa-chair text-primary me-2"></i>
+                        {% if package.available_seats <= 0 %}
+                            <span class="text-dark fw-bold">Status: Full (Waiting List Active)</span>
+                            <p class="small mb-0 text-muted mt-1">
+                                <i class="fa fa-users me-1"></i>
+                                <span id="waitingCount">0</span> people currently in waiting list
+                            </p>
+                        {% else %}
+                            Available Seats: <strong class="{% if package.available_seats < 10 %}text-danger{% endif %}">{{ package.available_seats }}</strong>
+                        {% endif %}
+                    </div>
+
+                    <p class="text-primary h4 mt-3">Base Price: ₹{{ package.base_price }}/person</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6">
+                {% if request.session.user_id %}
+                    <!-- Trip Expiry Warning -->
+                    {% if is_trip_expired %}
+                    <div class="alert alert-danger mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fa fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="alert-heading mb-1">Booking Closed</h5>
+                                <p class="mb-0">This trip has already departed on {{ package.triptime|date:"d M Y, h:i A" }} and is no longer available for booking.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% elif days_until_trip <= 7 and days_until_trip > 0 %}
+                    <div class="alert alert-warning mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fa fa-clock fa-2x"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="alert-heading mb-1">Limited Time!</h5>
+                                <p class="mb-0">Only <strong>{{ days_until_trip }} days</strong> left to book this trip. Book now to secure your spot!</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Waiting List Information Box -->
+                    {% if package.available_seats <= 0 %}
+                    <div class="waiting-info-box">
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-clock-o fa-2x text-info me-3"></i>
+                            <div>
+                                <h5 class="mb-1 text-info">Waiting List Active</h5>
+                                <p class="small mb-0">This package is fully booked. You can still join the waiting list and will be automatically promoted when seats become available.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Countdown Timer for Urgency -->
+                    {% if not is_trip_expired and days_until_trip > 0 and days_until_trip <= 7 and package.available_seats > 0 %}
+                    <div class="countdown-timer mb-4">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <div>
+                                <div class="countdown-number">{{ days_remaining|stringformat:"02d" }}</div>
+                                <div class="countdown-label">Days</div>
+                            </div>
+                            <div class="mx-2">:</div>
+                            <div>
+                                <div class="countdown-number">{{ hours_remaining|stringformat:"02d" }}</div>
+                                <div class="countdown-label">Hours</div>
+                            </div>
+                        </div>
+                        <small class="opacity-75">Time remaining to book</small>
+                    </div>
+                    {% endif %}
+
+                    <h1 class="text-white mb-3">Book A Tour Deals</h1>
+                    <p class="text-white mb-4">Get <span class="text-warning">50% Off</span> On Your First Adventure Trip With Travela. Get More Deal Offers Here.</p>
+
+                    <form method="post" action="{% url 'booking_process' package.id %}" id="bookingForm">
+                        {% csrf_token %}
+
+                        {% if is_trip_expired %}
+                        <div class="bg-dark p-5 rounded text-center">
+                            <i class="fa fa-calendar-times fa-4x text-danger mb-3"></i>
+                            <h3 class="text-white mb-3">Booking Closed</h3>
+                            <p class="text-white-50 mb-4">This trip departed on {{ package.triptime|date:"d M Y, h:i A" }} and is no longer available for booking.</p>
+                            <a href="{% url 'packages' %}" class="btn btn-primary btn-lg">
+                                <i class="fa fa-search me-2"></i>Browse Other Packages
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control bg-white border-0" id="name" name="name" value="{{ request.session.user_name }}" placeholder="Your Name" required>
+                                    <label for="name">Your Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="email" class="form-control bg-white border-0" id="email" name="email" value="{{ request.session.user_email }}" placeholder="Your Email" required>
+                                    <label for="email">Your Email</label>
+                                </div>
+                            </div>
+
+                            <!-- Automatic Date & Time - Not Editable -->
+                            <div class="col-md-6">
+                                <div class="datetime-display">
+                                    <i class="fa fa-calendar-alt text-primary me-2"></i>
+                                    <strong>Booking Time:</strong> <span id="currentDateTime"></span>
+                                    <input type="hidden" id="datetime" name="datetime" value="">
+                                    <small class="text-muted d-block mt-1">Auto-generated booking time</small>
+                                </div>
+                            </div>
+
+                            <!-- Trip Date Info -->
+                            <div class="col-md-6">
+                                <div class="datetime-display {% if days_until_trip <= 7 %}border-warning{% endif %}">
+                                    <i class="fa fa-calendar text-primary me-2"></i>
+                                    <strong>Trip Date:</strong>
+                                    <span>{{ package.triptime|date:"d M Y, h:i A" }}</span>
+                                    {% if days_until_trip <= 7 and days_until_trip > 0 %}
+                                    <span class="badge bg-warning ms-2">{{ days_until_trip }} days left</span>
+                                    {% endif %}
+                                    <input type="hidden" name="trip_date" value="{{ package.triptime|date:'Y-m-d H:i' }}">
+                                </div>
+                            </div>
+
+                            {% if package %}
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select bg-white border-0" id="travel_mode" name="travel_mode" required onchange="updatePersonLimit()">
+                                        <option value="" selected disabled>Select Travel Mode</option>
+                                        {% for mode in travel_modes %}
+                                            <option value="{{ mode }}" data-limit="
+                                                {% if mode == 'car' and package.category == 'Family' %}7
+                                                {% elif mode == 'car' and package.category == 'Honeymoon' %}4
+                                                {% elif mode == 'bike' %}2
+                                                {% elif mode == 'bus' %}50
+                                                {% elif mode == 'train' %}100
+                                                {% elif mode == 'flight' %}200
+                                                {% else %}60{% endif %}">
+                                                {% if mode == 'bus' %}Bus
+                                                {% elif mode == 'train' %}Train
+                                                {% elif mode == 'flight' %}Flight
+                                                {% elif mode == 'car' %}Car
+                                                {% elif mode == 'bike' %}Bike
+                                                {% endif %}
+                                                <span class="vehicle-limit-badge">
+                                                    Max {% if mode == 'car' and package.category == 'Family' %}7
+                                                    {% elif mode == 'car' and package.category == 'Honeymoon' %}4
+                                                    {% elif mode == 'bike' %}2
+                                                    {% elif mode == 'bus' %}50
+                                                    {% elif mode == 'train' %}100
+                                                    {% elif mode == 'flight' %}200
+                                                    {% else %}60{% endif %} persons
+                                                </span>
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="travel_mode">Travel Mode</label>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select bg-white border-0" id="persons" name="persons" required disabled>
+                                        <option value="" selected disabled>First select travel mode</option>
+                                    </select>
+                                    <label for="persons">Number of Persons</label>
+                                </div>
+                                <div id="seatMessage" class="seat-warning"></div>
+                                <div id="vehicleMessage" class="text-info small mt-1"></div>
+                            </div>
+
+                            <!-- Package Type Selection with Info -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select bg-white border-0" id="package_type" name="package_type" required onchange="updatePriceWithPackageType()">
+                                        <option value="standard" selected>Standard (Base Price)</option>
+                                        <option value="premium">Premium (+20% extra)</option>
+                                        <option value="vip">VIP (+50% extra)</option>
+                                    </select>
+                                    <label for="package_type">Package Type</label>
+                                </div>
+                                <div id="packageTypeInfo" class="package-type-info small mt-2" style="display: none;">
+                                    <i class="fa fa-info-circle text-warning me-1"></i>
+                                    <span id="packageTypeDescription"></span>
+                                </div>
+                            </div>
+
+                            <!-- Price Breakdown with Package Type -->
+                            <div class="col-12">
+                                <div id="priceBreakdown" class="price-breakdown" style="display: none;">
+                                    <h5>Price Breakdown</h5>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p>Base Price: ₹<span id="basePrice">{{ package.base_price }}</span> per person</p>
+                                            <p>Number of Persons: <span id="personCount">0</span></p>
+                                            <p>Subtotal: ₹<span id="subtotal">0</span></p>
+                                            <p>Group Discount: <span id="discount">0</span>%</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p>Package Type: <span id="selectedPackageType">Standard</span></p>
+                                            <p>Package Multiplier: <span id="packageMultiplier">1.0x</span></p>
+                                            <p>Package Type Price: ₹<span id="packageTypePrice">0</span></p>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <p class="total-price">Final Total: ₹<span id="totalPrice">0</span></p>
+                                </div>
+                            </div>
+
+                            <!-- Passenger Details Section -->
+                            <div class="col-12 mt-4">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fa fa-users me-2"></i>Passenger Details </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-3">
+                                            <i class="fa fa-info-circle me-1"></i>
+                                            Add details for each passenger. You can also add them later from your profile.
+                                            Fields marked with * are recommended for smooth travel.
+                                        </p>
+                                        <div id="passengerForms">
+                                            <!-- Passenger forms will be dynamically added here -->
+                                        </div>
+                                        <div class="text-center mt-3">
+                                            <button type="button" class="btn btn-outline-primary" id="addPassengerForm" style="display: none;">
+                                                <i class="fa fa-plus me-2"></i>Add Another Passenger
+                                            </button>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="fa fa-shield-alt me-1"></i>
+                                            Your information is secure and will only be used for travel purposes.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control bg-white border-0" placeholder="Special Request" id="message" name="message" style="height: 100px"></textarea>
+                                    <label for="message">Special Request</label>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Button based on seat availability -->
+                            <div class="col-12">
+                                <button class="btn w-100 py-3" type="submit" id="submitBtn" disabled>
+                                    <i class="fa" id="btnIcon"></i>
+                                    <span id="btnText"></span>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </form>
+                {% else %}
+                <div class="bg-primary p-5 rounded">
+                    <h1 class="text-white mb-3">Please Login</h1>
+                    <p class="text-white mb-4">You must be logged in to book a tour deal. Please login or register to continue.</p>
+                    <a href="{% url 'login' %}" class="btn btn-light text-primary rounded-pill py-3 px-5">Login Now</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-light rounded-pill py-3 px-5 ms-2">Register</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if package and not is_trip_expired %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current date and time automatically
+    function updateDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+
+        const dateTimeStr = `${year}-${month}-${day} ${hours}:${minutes}`;
+        const dateTimeInput = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        document.getElementById('currentDateTime').textContent = dateTimeStr;
+        document.getElementById('datetime').value = dateTimeInput;
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+
+    const travelModeSelect = document.getElementById('travel_mode');
+    const personsSelect = document.getElementById('persons');
+    const packageTypeSelect = document.getElementById('package_type');
+    const priceBreakdown = document.getElementById('priceBreakdown');
+    const basePriceSpan = document.getElementById('basePrice');
+    const personCountSpan = document.getElementById('personCount');
+    const subtotalSpan = document.getElementById('subtotal');
+    const discountSpan = document.getElementById('discount');
+    const totalPriceSpan = document.getElementById('totalPrice');
+    const packageTypePriceSpan = document.getElementById('packageTypePrice');
+    const selectedPackageTypeSpan = document.getElementById('selectedPackageType');
+    const packageMultiplierSpan = document.getElementById('packageMultiplier');
+    const packageTypeInfo = document.getElementById('packageTypeInfo');
+    const packageTypeDescription = document.getElementById('packageTypeDescription');
+    const seatMessage = document.getElementById('seatMessage');
+    const vehicleMessage = document.getElementById('vehicleMessage');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+    const passengerForms = document.getElementById('passengerForms');
+    const addPassengerBtn = document.getElementById('addPassengerForm');
+    const seatInfoContainer = document.getElementById('seatInfoContainer');
+    const waitingCountSpan = document.getElementById('waitingCount');
+
+    const packageId = {{ package.id }};
+    const basePrice = {{ package.base_price }};
+    const packageCategory = "{{ package.category }}";
+    let availableSeats = {{ package.available_seats }};
+
+    // Package type descriptions and multipliers
+    const PACKAGE_TYPES = {
+        'standard': {
+            name: 'Standard',
+            multiplier: 1.0,
+            description: '✓ Basic accommodation<br>✓ Regular meals<br>✓ Standard transportation<br>✓ Group guide service'
+        },
+        'premium': {
+            name: 'Premium',
+            multiplier: 1.2,
+            description: '✓ Better accommodation (3-4 star)<br>✓ Premium meals<br>✓ Comfortable transportation<br>✓ Private guide<br>✓ Some activities included'
+        },
+        'vip': {
+            name: 'VIP',
+            multiplier: 1.5,
+            description: '✓ Luxury accommodation (5 star)<br>✓ Gourmet meals<br>✓ Luxury transportation<br>✓ Personal guide<br>✓ All activities included<br>✓ Priority booking<br>✓ Special experiences'
+        }
+    };
+
+    // Vehicle capacity limits
+    const VEHICLE_LIMITS = {
+        'car': { 'Family': 7, 'Honeymoon': 4, 'default': 4 },
+        'bike': 2,
+        'bus': 50,
+        'train': 100,
+        'flight': 200
+    };
+
+    // Function to check waiting list status
+    function checkWaitingListStatus() {
+        fetch(`/check-waiting-list/${packageId}/`)
+            .then(response => response.json())
+            .then(data => {
+                availableSeats = data.available_seats;
+                if (waitingCountSpan) {
+                    waitingCountSpan.textContent = data.waiting_count;
+                }
+
+                // Update seat info display
+                if (seatInfoContainer) {
+                    if (data.available_seats <= 0) {
+                        seatInfoContainer.innerHTML = `
+                            <i class="fa fa-chair text-primary me-2"></i>
+                            <span class="text-dark fw-bold">Status: Full (Waiting List Active)</span>
+                            <p class="small mb-0 text-muted mt-1">
+                                <i class="fa fa-users me-1"></i>
+                                ${data.waiting_count} people currently in waiting list
+                            </p>
+                        `;
+                        seatInfoContainer.classList.remove('bg-light');
+                        seatInfoContainer.classList.add('bg-warning');
+                    } else {
+                        seatInfoContainer.innerHTML = `
+                            <i class="fa fa-chair text-primary me-2"></i>
+                            Available Seats: <strong class="${data.available_seats < 10 ? 'text-danger' : ''}">${data.available_seats}</strong>
+                        `;
+                        seatInfoContainer.classList.remove('bg-warning');
+                        seatInfoContainer.classList.add('bg-light');
+                    }
+                }
+            })
+            .catch(error => console.error('Error checking waiting list:', error));
+    }
+
+    // Check waiting list status every 30 seconds
+    checkWaitingListStatus();
+    setInterval(checkWaitingListStatus, 30000);
+
+    function getVehicleLimit(travelMode) {
+        if (travelMode === 'car') {
+            if (packageCategory === 'Family') return 7;
+            if (packageCategory === 'Honeymoon') return 4;
+            return 4;
+        }
+        return VEHICLE_LIMITS[travelMode] || 60;
+    }
+
+    function generatePassengerForm(index) {
+        return `
+            <div class="passenger-form mb-3 p-3 border rounded" data-index="${index}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-primary mb-0">
+                        <i class="fa fa-user me-2"></i>Passenger ${index + 1}
+                    </h6>
+                    <span class="badge bg-info">Optional</span>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label small fw-bold">
+                            <i class="fa fa-id-card me-1"></i>Full Name
+                        </label>
+                        <input type="text" class="form-control form-control-sm"
+                               name="passenger_name_${index}"
+                               placeholder="Enter full name"
+                               pattern="[A-Za-z\\s]+"
+                               title="Only letters and spaces allowed">
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label small fw-bold">
+                            <i class="fa fa-calendar me-1"></i>Age
+                        </label>
+                        <input type="number" class="form-control form-control-sm"
+                               name="passenger_age_${index}"
+                               min="1" max="120"
+                               placeholder="Age"
+                               step="1">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small fw-bold">
+                            <i class="fa fa-venus-mars me-1"></i>Gender
+                        </label>
+                        <select class="form-select form-select-sm" name="passenger_gender_${index}">
+                            <option value="">Select Gender</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small fw-bold">
+                            <i class="fa fa-id-card me-1"></i>Aadhar Number
+                        </label>
+                        <input type="text" class="form-control form-control-sm"
+                               name="passenger_aadhar_${index}"
+                               placeholder="12-digit Aadhar"
+                               pattern="[0-9]{12}"
+                               maxlength="12"
+                               title="Please enter a valid 12-digit Aadhar number">
+                        <small class="text-muted">Optional but recommended</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function updatePassengerForms() {
+        const persons = personsSelect.value;
+        if (!persons) return;
+
+        const numPersons = parseInt(persons);
+        let formsHtml = '';
+
+        for (let i = 0; i < numPersons; i++) {
+            formsHtml += generatePassengerForm(i);
+        }
+
+        passengerForms.innerHTML = formsHtml;
+
+        if (numPersons > 0) {
+            addPassengerBtn.style.display = 'inline-block';
+        } else {
+            addPassengerBtn.style.display = 'none';
+        }
+
+        // Add input validation
+        document.querySelectorAll('input[name^="passenger_aadhar_"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);
+            });
+        });
+
+        document.querySelectorAll('input[name^="passenger_name_"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^A-Za-z\\s]/g, '');
+            });
+        });
+    }
+
+    function updatePersonLimit() {
+        const travelMode = travelModeSelect.value;
+
+        if (!travelMode) {
+            personsSelect.innerHTML = '<option value="" selected disabled>First select travel mode</option>';
+            personsSelect.disabled = true;
+            return;
+        }
+
+        const vehicleLimit = getVehicleLimit(travelMode);
+        const maxAllowed = Math.min(vehicleLimit, {{ package.max_persons }});
+
+        let options = '<option value="" selected disabled>Select number of persons</option>';
+        for (let i = 1; i <= maxAllowed; i++) {
+            options += `<option value="${i}">${i} Person${i > 1 ? 's' : ''}</option>`;
+        }
+
+        personsSelect.innerHTML = options;
+        personsSelect.disabled = false;
+
+        vehicleMessage.textContent = `Maximum ${maxAllowed} persons allowed for ${travelMode} in ${packageCategory} package`;
+        priceBreakdown.style.display = 'none';
+        submitBtn.disabled = true;
+        seatMessage.textContent = '';
+        passengerForms.innerHTML = '';
+        addPassengerBtn.style.display = 'none';
+    }
+
+    function calculateBasePrice(persons) {
+        if (!persons) return { subtotal: 0, discount: 0, total: 0 };
+
+        persons = parseInt(persons);
+        let subtotal = basePrice * persons;
+        let discount = 0;
+
+        if (persons <= 1) {
+            discount = 0;
+        } else if (persons <= 5) {
+            discount = 0;
+        } else if (persons <= 10) {
+            discount = 5;
+        } else if (persons <= 20) {
+            discount = 10;
+        } else {
+            discount = 15;
+        }
+
+        let total = subtotal - (subtotal * discount / 100);
+        return { subtotal, discount, total: Math.round(total) };
+    }
+
+    function updatePriceWithPackageType() {
+        const persons = personsSelect.value;
+        const packageType = packageTypeSelect.value;
+
+        if (!persons) return;
+
+        const packageDetails = PACKAGE_TYPES[packageType];
+        selectedPackageTypeSpan.textContent = packageDetails.name;
+        packageMultiplierSpan.textContent = packageDetails.multiplier + 'x';
+        packageTypeDescription.innerHTML = packageDetails.description;
+        packageTypeInfo.style.display = 'block';
+
+        const { subtotal, discount } = calculateBasePrice(persons);
+        const packageTypePrice = Math.round(subtotal * packageDetails.multiplier);
+
+        personCountSpan.textContent = persons;
+        subtotalSpan.textContent = subtotal.toLocaleString('en-IN');
+        discountSpan.textContent = discount;
+        packageTypePriceSpan.textContent = packageTypePrice.toLocaleString('en-IN');
+        totalPriceSpan.textContent = packageTypePrice.toLocaleString('en-IN');
+        priceBreakdown.style.display = 'block';
+    }
+
+    function checkAvailability(persons) {
+        if (!persons) return false;
+
+        persons = parseInt(persons);
+        const travelMode = travelModeSelect.value;
+        const vehicleLimit = getVehicleLimit(travelMode);
+
+        if (persons > vehicleLimit) {
+            seatMessage.innerHTML = `<i class="fa fa-exclamation-circle me-1"></i>Maximum ${vehicleLimit} persons allowed for ${travelMode}`;
+            seatMessage.style.color = '#dc3545';
+            return false;
+        } else {
+            // For waiting list, always return true but with different message
+            if (availableSeats <= 0) {
+                seatMessage.innerHTML = `<i class="fa fa-clock-o me-1"></i>Package is full. You will be added to waiting list.`;
+                seatMessage.style.color = '#17a2b8';
+                return true;
+            } else if (persons > availableSeats) {
+                seatMessage.innerHTML = `<i class="fa fa-exclamation-circle me-1"></i>Only ${availableSeats} seats available. You will be added to waiting list for remaining seats.`;
+                seatMessage.style.color = '#ffc107';
+                return true;
+            } else {
+                seatMessage.innerHTML = `<i class="fa fa-check-circle me-1"></i>✓ Available for booking`;
+                seatMessage.style.color = '#28a745';
+                return true;
+            }
+        }
+    }
+
+    travelModeSelect.addEventListener('change', updatePersonLimit);
+
+    personsSelect.addEventListener('change', function() {
+        const persons = this.value;
+
+        if (persons) {
+            const available = checkAvailability(persons);
+
+            if (available) {
+                updatePriceWithPackageType();
+                updatePassengerForms();
+                submitBtn.disabled = false;
+
+                // Update button text based on seat availability
+                if (availableSeats <= 0) {
+                    btnText.innerText = "Join Waiting List";
+                    btnIcon.className = "fa fa-clock-o me-2";
+                    submitBtn.classList.add('btn-waiting');
+                    submitBtn.classList.remove('btn-primary');
+                } else {
+                    btnText.innerText = "Proceed to Payment";
+                    btnIcon.className = "fa fa-credit-card me-2";
+                    submitBtn.classList.remove('btn-waiting');
+                    submitBtn.classList.add('btn-primary');
+                }
+            } else {
+                priceBreakdown.style.display = 'none';
+                submitBtn.disabled = true;
+                passengerForms.innerHTML = '';
+                addPassengerBtn.style.display = 'none';
+            }
+        } else {
+            priceBreakdown.style.display = 'none';
+            seatMessage.textContent = '';
+            submitBtn.disabled = true;
+            passengerForms.innerHTML = '';
+            addPassengerBtn.style.display = 'none';
+        }
+    });
+
+    // Add another passenger form
+    addPassengerBtn.addEventListener('click', function() {
+        const currentForms = document.querySelectorAll('.passenger-form').length;
+        const maxPersons = parseInt(personsSelect.value);
+
+        if (currentForms < maxPersons) {
+            const newForm = document.createElement('div');
+            newForm.innerHTML = generatePassengerForm(currentForms);
+            passengerForms.appendChild(newForm.firstElementChild);
+
+            // Add validation to new inputs
+            const newInputs = newForm.querySelectorAll('input[name^="passenger_aadhar_"]');
+            newInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12);
+                });
+            });
+
+            const newNameInputs = newForm.querySelectorAll('input[name^="passenger_name_"]');
+            newNameInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^A-Za-z\\s]/g, '');
+                });
+            });
+
+            newForm.firstElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert(`You can only add up to ${maxPersons} passenger(s)`);
+        }
+    });
+
+    packageTypeSelect.addEventListener('change', function() {
+        if (personsSelect.value) {
+            updatePriceWithPackageType();
+        }
+    });
+
+    // Form submission validation
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        const persons = personsSelect.value;
+        if (!persons) {
+            e.preventDefault();
+            alert('Please select number of persons');
+            return;
+        }
+
+        // Validate Aadhar numbers if provided
+        const aadharInputs = document.querySelectorAll('input[name^="passenger_aadhar_"]');
+        let invalidAadhar = false;
+
+        aadharInputs.forEach(input => {
+            if (input.value && input.value.length !== 12) {
+                invalidAadhar = true;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        if (invalidAadhar) {
+            e.preventDefault();
+            alert('Please enter valid 12-digit Aadhar numbers or leave them empty');
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

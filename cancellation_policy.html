@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cancellation Policy - Travela{% endblock %}
+
+{% block extra_css %}
+<style>
+    .policy-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .policy-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+    }
+
+    .policy-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+
+    .booking-summary {
+        padding: 25px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .refund-calculator {
+        padding: 25px;
+        background: #e8f4fd;
+        border-left: 5px solid #17a2b8;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+
+    .refund-amount {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .policy-section {
+        padding: 25px;
+    }
+
+    .policy-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    .policy-table th {
+        background: #667eea;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .policy-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .policy-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .policy-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge-refund {
+        background: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .badge-no-refund {
+        background: #dc3545;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .countdown-timer {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #dc3545;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .btn-cancel {
+        background: #dc3545;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .btn-cancel:hover {
+        background: #c82333;
+    }
+
+    .btn-back {
+        background: #6c757d;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+        color: white;
+    }
+
+    .info-icon {
+        font-size: 1.2rem;
+        margin-right: 10px;
+        color: #17a2b8;
+    }
+
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .timeline-item {
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        background: white;
+        border-left: 4px solid;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .timeline-item.current {
+        border-left-color: #28a745;
+        background: #f0fff4;
+    }
+
+    .timeline-item.upcoming {
+        border-left-color: #ffc107;
+    }
+
+    .timeline-item.expired {
+        border-left-color: #dc3545;
+        opacity: 0.7;
+    }
+
+    .timeline-date {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+
+    .timeline-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .timeline-amount {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-breadcrumb">
+    <div class="container text-center py-5" style="max-width: 900px;">
+        <h3 class="text-white display-3 mb-4">Cancellation Policy</h3>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'my_bookings' %}">My Bookings</a></li>
+            <li class="breadcrumb-item active text-white">Cancellation Policy</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container policy-container">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="policy-card">
+            <div class="policy-header">
+                <h2>Booking Cancellation Policy</h2>
+                <p>Please review our cancellation terms and refund policy</p>
+            </div>
+
+            <div class="booking-summary">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>Booking #{{ booking.id }} - {{ booking.package.title }}</h4>
+                        <p class="mb-2">
+                            <i class="fa fa-calendar text-primary"></i>
+                            Travel Date: <strong>{{ booking.travel_date }}</strong>
+                        </p>
+                        <p class="mb-2">
+                            <i class="fa fa-users text-primary"></i>
+                            {{ booking.persons }} Persons |
+                            <i class="fa fa-{{ booking.travel_mode }} text-primary"></i>
+                            {{ booking.get_travel_mode_display }} |
+                            <span class="badge bg-info">{{ booking.get_package_type_display }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <h5>Total Amount Paid</h5>
+                        <h3 class="text-success">₹{{ booking.total_price|floatformat:2 }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <h4 class="mb-4">Current Refund Eligibility</h4>
+
+                <div class="refund-calculator">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-3">
+                                <i class="fa fa-clock-o info-icon"></i>
+                                Time until travel: <span class="countdown-timer">{{ refund_info.days_until_travel }} days ({{ refund_info.hours_until_travel }} hours)</span>
+                            </h5>
+                            <p class="mb-0">{{ refund_info.refund_message }}</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="refund-amount">₹{{ refund_info.refund_amount|floatformat:2 }}</div>
+                            <p class="mb-0">Refund Amount ({{ refund_info.refund_percentage }}%)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="fa fa-info-circle"></i>
+                    Refunds will be processed within 7-10 business days to your original payment method.
+                </div>
+
+                <h4 class="mt-5 mb-4">Cancellation Timeline</h4>
+
+                <div class="timeline">
+                    <!-- More than 7 days -->
+                    <div class="timeline-item {% if refund_info.days_until_travel >= 7 %}current{% else %}upcoming{% endif %}">
+                        <div class="timeline-date">
+                            <i class="fa fa-calendar-check-o"></i>
+                            {% if refund_info.days_until_travel >= 7 %}Current Status{% else %}If cancelled 7+ days before{% endif %}
+                        </div>
+                        <div class="timeline-title">7 or More Days Before Travel</div>
+                        <p>Cancel your booking at least 7 days before the travel date to receive:</p>
+                        <div class="timeline-amount">70% Refund (₹{{ scenarios.more_than_7days.refund_amount|floatformat:2 }})</div>
+                    </div>
+
+                    <!-- 4-7 days -->
+                    <div class="timeline-item {% if refund_info.days_until_travel >= 4 and refund_info.days_until_travel < 7 %}current{% else %}upcoming{% endif %}">
+                        <div class="timeline-date">
+                            <i class="fa fa-calendar"></i>
+                            {% if refund_info.days_until_travel >= 4 and refund_info.days_until_travel < 7 %}Current Status{% else %}If cancelled 4-7 days before{% endif %}
+                        </div>
+                        <div class="timeline-title">4 to 7 Days Before Travel</div>
+                        <p>Cancel your booking between 4 to 7 days before the travel date:</p>
+                        <div class="timeline-amount">50% Refund (₹{{ scenarios.less_than_4days.refund_amount|floatformat:2 }})</div>
+                    </div>
+
+                    <!-- 24 hours to 4 days -->
+                    <div class="timeline-item {% if refund_info.days_until_travel < 4 and refund_info.hours_until_travel >= 24 %}current{% else %}upcoming{% endif %}">
+                        <div class="timeline-date">
+                            <i class="fa fa-hourglass-half"></i>
+                            {% if refund_info.days_until_travel < 4 and refund_info.hours_until_travel >= 24 %}Current Status{% else %}If cancelled 24 hours to 4 days before{% endif %}
+                        </div>
+                        <div class="timeline-title">24 Hours to 4 Days Before Travel</div>
+                        <p>Cancel your booking between 24 hours and 4 days before travel:</p>
+                        <div class="timeline-amount">50% Refund (₹{{ scenarios.less_than_4days.refund_amount|floatformat:2 }})</div>
+                    </div>
+
+                    <!-- Less than 24 hours -->
+                    <div class="timeline-item {% if refund_info.hours_until_travel < 24 %}current{% else %}upcoming{% endif %} {% if refund_info.hours_until_travel < 24 %}expired{% endif %}">
+                        <div class="timeline-date">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            {% if refund_info.hours_until_travel < 24 %}Current Status{% else %}If cancelled within 24 hours{% endif %}
+                        </div>
+                        <div class="timeline-title">Less Than 24 Hours Before Travel</div>
+                        <p>Cancellations within 24 hours of travel date:</p>
+                        <div class="timeline-amount text-danger">No Refund (₹0)</div>
+                    </div>
+                </div>
+
+                <h4 class="mt-5 mb-4">Detailed Policy</h4>
+
+                <table class="policy-table">
+                    <thead>
+                        <tr>
+                            <th>Cancellation Period</th>
+                            <th>Refund Percentage</th>
+                            <th>Refund Amount</th>
+                            <th>Processing Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>7 or more days before travel</td>
+                            <td><span class="badge-refund">70% Refund</span></td>
+                            <td>₹{{ scenarios.more_than_7days.refund_amount|floatformat:2 }}</td>
+                            <td>7-10 business days</td>
+                        </tr>
+                        <tr>
+                            <td>4-7 days before travel</td>
+                            <td><span class="badge-refund">50% Refund</span></td>
+                            <td>₹{{ scenarios.less_than_4days.refund_amount|floatformat:2 }}</td>
+                            <td>7-10 business days</td>
+                        </tr>
+                        <tr>
+                            <td>24 hours to 4 days before travel</td>
+                            <td><span class="badge-refund">50% Refund</span></td>
+                            <td>₹{{ scenarios.less_than_4days.refund_amount|floatformat:2 }}</td>
+                            <td>7-10 business days</td>
+                        </tr>
+                        <tr>
+                            <td>Less than 24 hours before travel</td>
+                            <td><span class="badge-no-refund">No Refund</span></td>
+                            <td>₹0</td>
+                            <td>N/A</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info mt-4">
+                    <h5><i class="fa fa-gavel"></i> Terms & Conditions</h5>
+                    <ul class="mb-0">
+                        <li>Cancellation requests must be submitted through our website or customer support.</li>
+                        <li>Refunds will be processed to the original payment method used for booking.</li>
+                        <li>Processing time of 7-10 business days applies to all refunds.</li>
+                        <li>In case of no-show or cancellation after travel date, no refund will be provided.</li>
+                        <li>Travela reserves the right to modify this policy with prior notice.</li>
+                        <li>For group bookings (10+ persons), different cancellation policies may apply.</li>
+                    </ul>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="{% url 'my_bookings' %}" class="btn-back">
+                        <i class="fa fa-arrow-left"></i> Back to Bookings
+                    </a>
+
+                    {% if booking.booking_status != 'cancelled' %}
+                        <button class="btn-cancel" onclick="confirmCancellation()">
+                            <i class="fa fa-times-circle"></i> Proceed with Cancellation
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmCancellation() {
+    const refundAmount = {{ refund_info.refund_amount|floatformat:2 }};
+    const refundPercentage = {{ refund_info.refund_percentage }};
+    const totalAmount = {{ booking.total_price|floatformat:2 }};
+
+    let message = `Are you sure you want to cancel this booking?\n\n`;
+    message += `Total Paid: ₹${totalAmount}\n`;
+    message += `Refund Amount: ₹${refundAmount} (${refundPercentage}%)\n`;
+    message += `You will receive: ₹${refundAmount}\n\n`;
+
+    if (refundPercentage === 0) {
+        message += `⚠️ WARNING: No refund will be provided for this cancellation.\n`;
+    }
+
+    message += `\nThis action cannot be undone. Refund will be processed within 7-10 business days.`;
+
+    if (confirm(message)) {
+        // Make the cancellation request
+        fetch(`/cancel-booking/{{ booking.id }}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = "{% url 'my_bookings' %}";
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

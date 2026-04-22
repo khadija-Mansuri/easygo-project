@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invoice #{{ invoice.invoice_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-container {
+        max-width: 900px;
+        margin: 30px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .invoice-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .company-name {
+        font-size: 28px;
+        font-weight: bold;
+        color: #007bff;
+    }
+    .invoice-title {
+        font-size: 24px;
+        margin-top: 10px;
+        color: #333;
+    }
+    .invoice-details {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    .customer-details {
+        background: #e3f2fd;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    .table-custom {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+    .table-custom th {
+        background: #007bff;
+        color: white;
+        padding: 12px;
+    }
+    .table-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .total-row {
+        font-size: 18px;
+        font-weight: bold;
+        background: #f8f9fa;
+    }
+    .grand-total {
+        font-size: 22px;
+        color: #28a745;
+    }
+    .inclusions-box, .exclusions-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+    .inclusions-box h5, .exclusions-box h5 {
+        color: #007bff;
+        margin-bottom: 15px;
+    }
+    .print-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .invoice-container {
+            box-shadow: none;
+            margin: 0;
+            padding: 15px;
+        }
+    }
+    .badge-status {
+        font-size: 14px;
+        padding: 5px 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="invoice-container">
+        <div class="invoice-header">
+            <div class="company-name">TRAVELA TOURS & TRAVELS</div>
+            <div>123 Travel Street, Tourism Hub, Mumbai - 400001</div>
+            <div>Phone: +91 98765 43210 | Email: info@travela.com</div>
+            <div>GSTIN: 27ABCDE1234F1Z5</div>
+            <div class="invoice-title">TAX INVOICE</div>
+        </div>
+
+        <div class="row invoice-details">
+            <div class="col-md-6">
+                <p><strong>Invoice No:</strong> {{ invoice.invoice_number }}</p>
+                <p><strong>Date:</strong> {{ invoice.generated_date|date:"d M Y, h:i A" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Booking ID:</strong> #{{ booking.id }}</p>
+<p><strong>Payment Status:</strong>
+    <span class="badge
+        {% if booking.booking_status == 'confirmed' %}bg-success
+        {% elif booking.booking_status == 'pending' %}bg-warning
+        {% else %}bg-danger{% endif %} badge-status">
+
+        {% if booking.booking_status == 'confirmed' %}PAID
+        {% elif booking.booking_status == 'pending' %}PENDING
+        {% else %}{{ booking.booking_status|upper }}{% endif %}
+    </span>
+</p>
+            </div>
+        </div>
+
+        <div class="customer-details">
+            <h5>BILL TO:</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Name:</strong> {{ booking.user.name }}</p>
+                    <p><strong>Email:</strong> {{ booking.user.email }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Phone:</strong> {{ booking.user.phone }}</p>
+                    <p><strong>Location:</strong> {{ booking.user.city }}, {{ booking.user.state }}</p>
+                </div>
+            </div>
+        </div>
+
+        <h5>PACKAGE DETAILS:</h5>
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 30%;">Package</th>
+                <td>{{ booking.package.title }}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{ booking.package.location }}</td>
+            </tr>
+            <tr>
+                <th>Duration</th>
+                <td>{{ booking.package.duration }}</td>
+            </tr>
+            <tr>
+                <th>Travel Date</th>
+                <td>{{ booking.travel_date }}</td>
+            </tr>
+            <tr>
+                <th>Travel Mode</th>
+                <td>{{ booking.get_travel_mode_display }}</td>
+            </tr>
+            <tr>
+                <th>Package Type</th>
+                <td>{{ booking.get_package_type_display }}</td>
+            </tr>
+            <tr>
+                <th>Number of Persons</th>
+                <td>{{ booking.persons }}</td>
+            </tr>
+        </table>
+<!-- Passenger Details Section -->
+<h5 class="mt-4">PASSENGER DETAILS:</h5>
+{% with passengers=invoice.invoice_items.passenger_details %}
+    {% if passengers %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-primary">
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Aadhar Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for passenger in passengers %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ passenger.name }}</td>
+                        <td>{{ passenger.age }}</td>
+                        <td>{{ passenger.gender }}</td>
+                        <td>{{ passenger.aadhar }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle me-2"></i>No passenger details provided for this booking.
+        </div>
+    {% endif %}
+{% endwith %}
+        <h5>COST BREAKDOWN:</h5>
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-end">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Base Price (₹{{ invoice.base_amount|floatformat:0 }} per person × {{ booking.persons }} persons)</td>
+                    <td class="text-end">₹{{ invoice.base_amount|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Package Type Multiplier ({{ invoice.package_type_multiplier }}x)</td>
+                    <td class="text-end">₹{{ invoice.package_type_amount|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Discount ({{ invoice.discount_percentage }}%)</td>
+                    <td class="text-end text-danger">-₹{{ invoice.discount_amount|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Subtotal after discount</td>
+                    <td class="text-end">₹{{ invoice.package_type_amount|add:"-"|add:invoice.discount_amount|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>GST ({{ invoice.tax_percentage }}%)</td>
+                    <td class="text-end">₹{{ invoice.tax_amount|floatformat:2 }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>TOTAL AMOUNT</strong></td>
+                    <td class="text-end grand-total"><strong>₹{{ invoice.total_amount|floatformat:2 }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="inclusions-box">
+                    <h5><i class="fa fa-check-circle text-success me-2"></i>INCLUSIONS</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fa fa-check text-success me-2"></i>Accommodation as per package</li>
+                        <li><i class="fa fa-check text-success me-2"></i>Meals: Breakfast, Lunch, Dinner</li>
+                        <li><i class="fa fa-check text-success me-2"></i>Transportation as per itinerary</li>
+                        <li><i class="fa fa-check text-success me-2"></i>Sightseeing as per package</li>
+                        <li><i class="fa fa-check text-success me-2"></i>Tour Manager services</li>
+                        <li><i class="fa fa-check text-success me-2"></i>All permits and entry fees</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="exclusions-box">
+                    <h5><i class="fa fa-times-circle text-danger me-2"></i>EXCLUSIONS</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fa fa-times text-danger me-2"></i>Personal expenses</li>
+                        <li><i class="fa fa-times text-danger me-2"></i>Tips and gratuities</li>
+                        <li><i class="fa fa-times text-danger me-2"></i>Travel insurance</li>
+                        <li><i class="fa fa-times text-danger me-2"></i>Any items not mentioned in inclusions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+<div class="mt-4">
+    <h5>TERMS & CONDITIONS:</h5>
+    <ul>
+        <li>This is a computer generated invoice - valid without signature</li>
+        <li>Payment must be made before the travel date</li>
+        <li>If the waiting list is not confirmed, the amount will be refunded within 7 days</li>
+        <li>Cancellation charges apply as per company policy</li>
+        <li>Please carry a printout of this invoice during travel</li>
+        <li>For any queries, contact our customer support</li>
+    </ul>
+</div>
+
+        <div class="text-center mt-5">
+            <p class="mb-0">Thank you for choosing Travela!</p>
+            <p>We wish you a pleasant journey!</p>
+        </div>
+    </div>
+</div>
+
+<div class="print-btn no-print">
+    <button onclick="window.print()" class="btn btn-primary btn-lg rounded-circle shadow">
+        <i class="fa fa-print"></i>
+    </button>
+</div>
+
+<div class="text-center my-4 no-print">
+    <a href="{% url 'profile' %}" class="btn btn-secondary">
+        <i class="fa fa-arrow-left me-2"></i>Back to Profile
+    </a>
+    <a href="{% url 'download_invoice' booking.id %}" class="btn btn-success ms-2">
+        <i class="fa fa-download me-2"></i>Download PDF
+    </a>
+</div>
+{% endblock %}

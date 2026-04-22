@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Travela - Tour Packages{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/magnific-popup.min.css">
+
+<div class="container-fluid bg-breadcrumb">
+    <div class="container text-center py-5" style="max-width: 900px;">
+        <h3 class="text-white display-3 mb-4">Travel Packages</h3>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active text-white">Packages</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Categories</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'packages' %}" class="list-group-item list-group-item-action {% if not selected_category %}active{% endif %}">
+                            All Packages
+                        </a>
+                        {% for cat in categories %}
+                        <a href="?category={{ cat }}" class="list-group-item list-group-item-action {% if selected_category == cat %}active{% endif %}">
+                            {{ cat }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                {% if user_city %}
+                <div class="alert alert-info py-2 mb-4">
+                    <i class="fa fa-map-marker-alt me-2"></i>
+                    Showing packages starting from <strong>{{ user_city }}</strong>
+                    <a href="{% url 'packages' %}" class="float-end text-decoration-none small">Show All</a>
+                </div>
+                {% endif %}
+
+                <div class="row g-4">
+{% for p in packages %}
+<div class="col-md-6 col-xl-4">
+    <div class="packages-item shadow-sm h-100 bg-white rounded">
+        <div class="packages-img position-relative overflow-hidden">
+            <a href="{{ p.image.url }}" class="image-popup" title="{{ p.title }}">
+                <img src="{{ p.image.url }}" class="img-fluid w-100 rounded-top img-zoom" alt="{{ p.title }}">
+                <div class="img-overlay">
+                    <i class="fa fa-expand fa-3x text-white"></i>
+                </div>
+            </a>
+
+            <!-- Trip Status Badge -->
+            {% with status=p.get_trip_status %}
+            <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                <span class="badge {{ status.badge_class }} px-3 py-2">
+                    <i class="fa {{ status.icon }} me-1"></i>{{ status.message }}
+                </span>
+            </div>
+            {% endwith %}
+
+            {% if p.id in booked_package_ids %}
+                <div class="bg-success text-white px-3 py-1 position-absolute top-0 end-0 rounded-bottom-start" style="z-index: 10;">
+                    <i class="fa fa-check-circle"></i> Booked
+                </div>
+            {% endif %}
+            <div class="packages-price py-2 px-4">₹{{ p.base_price }}</div>
+        </div>
+
+        <div class="packages-content p-4">
+            <h5 class="text-capitalize">{{ p.title }}</h5>
+            <div class="d-flex justify-content-between small text-primary mb-3">
+                <span><i class="fa fa-map-marker-alt me-1"></i>{{ p.location|truncatechars:15 }}</span>
+                <span><i class="fa fa-clock me-1"></i>{{ p.duration }}</span>
+            </div>
+            <p class="text-muted small mb-4">{{ p.description|truncatewords:15 }}</p>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="{% url 'package_detail' p.id %}" class="btn btn-outline-primary w-100">
+                        <i class="fa fa-info-circle me-1"></i>Details
+                    </a>
+                </div>
+                <div class="col-6">
+                    {% if request.session.user_id %}
+                        {% if p.id in booked_package_ids %}
+                            <button class="btn btn-success w-100" disabled>
+                                <i class="fa fa-check"></i> Booked
+                            </button>
+                        {% elif p.is_trip_expired %}
+                            <button class="btn btn-secondary w-100" disabled>
+                                <i class="fa fa-calendar-times"></i> Closed
+                            </button>
+                        {% else %}
+                            <a href="{% url 'booking_process' p.id %}" class="btn btn-primary w-100">
+                                <i class="fa fa-book"></i> Book Now
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}?next={% url 'booking_process' p.id %}" class="btn btn-secondary w-100">
+                            <i class="fa fa-sign-in"></i> Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-12 text-center py-5">
+    <h4 class="text-muted">No packages available in this category.</h4>
+</div>
+{% endfor %}
+                </div>
+
+                <div class="row mt-5">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if packages.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ packages.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+                            <li class="page-item active"><span class="page-link">{{ packages.number }} of {{ packages.paginator.num_pages }}</span></li>
+                            {% if packages.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ packages.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .img-zoom { transition: transform .5s ease; }
+    .packages-img:hover .img-zoom { transform: scale(1.1); }
+    .img-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(19, 53, 123, 0.5); opacity: 0;
+        display: flex; align-items: center; justify-content: center;
+        transition: 0.4s;
+    }
+    .packages-img:hover .img-overlay { opacity: 1; }
+    .list-group-item.active { background-color: #13357B; border-color: #13357B; }
+    /* Ensure the Details button matches the theme */
+    .btn-outline-primary { color: #13357B; border-color: #13357B; }
+    .btn-outline-primary:hover { background-color: #13357B; color: white; }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.image-popup').magnificPopup({
+            type: 'image',
+            gallery: { enabled: true },
+            mainClass: 'mfp-with-zoom',
+            zoom: { enabled: true, duration: 300, easing: 'ease-in-out' }
+        });
+    });
+</script>
+{% endblock %}

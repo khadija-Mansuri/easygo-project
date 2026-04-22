@@ -1,0 +1,677 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Travela{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 30px;
+    }
+    .profile-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        margin: 0 auto 20px;
+        overflow: hidden;
+    }
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .profile-avatar i {
+        font-size: 48px;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .stat-number {
+        font-size: 32px;
+        font-weight: bold;
+    }
+    .stat-label {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    .booking-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .booking-table th {
+        background: #f8f9fa;
+        padding: 12px;
+        font-weight: 600;
+    }
+    .booking-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    .booking-table tr:hover {
+        background: #f8f9fa;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-confirmed {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .status-waiting {
+        background: #e1f5fe;
+        color: #0288d1;
+        border: 1px solid #b3e5fc;
+    }
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    .info-item {
+        margin-bottom: 15px;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        font-size: 16px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+    }
+    .empty-state i {
+        font-size: 64px;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    .empty-state h4 {
+        color: #495057;
+        margin-bottom: 10px;
+    }
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .cancellation-info {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+    .aadhar-verified {
+        color: #28a745;
+        font-size: 12px;
+        margin-left: 5px;
+    }
+    .aadhar-masked {
+        font-family: monospace;
+        font-size: 16px;
+        letter-spacing: 2px;
+    }
+    .photo-upload-hint {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .summary-card {
+        transition: transform 0.3s;
+    }
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .waiting-info {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 8px;
+        margin-top: 5px;
+        border-radius: 4px;
+        font-size: 11px;
+    }
+    .promotion-badge {
+        background: #4caf50;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        display: inline-block;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="profile-header">
+    <div class="container text-center">
+        <h1 class="display-4 mb-3">My Profile</h1>
+        <p class="lead">Manage your personal information and bookings</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Profile Information Column -->
+        <div class="col-lg-4">
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}" alt="{{ user.name }}">
+                    {% else %}
+                        <i class="fa fa-user"></i>
+                    {% endif %}
+                </div>
+                <h3 class="text-center mb-3">{{ user.name }}</h3>
+                <p class="text-center text-muted mb-4">
+                    <i class="fa fa-envelope me-2"></i>{{ user.email }}
+                </p>
+
+                <hr>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-phone me-2"></i>Phone Number
+                    </div>
+                    <div class="info-value">{{ user.phone }}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-map-marker-alt me-2"></i>Location
+                    </div>
+                    <div class="info-value">{{ user.city }}, {{ user.state }}</div>
+                </div>
+
+                <!-- Aadhar Information Section -->
+                {% if user.aadhar_number %}
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-id-card me-2"></i>Aadhar Number
+                        <span class="aadhar-verified">
+                            <i class="fa fa-check-circle"></i> Verified
+                        </span>
+                    </div>
+                    <div class="info-value aadhar-masked">
+                        {{ user.aadhar_number|slice:":4" }} •••• •••• {{ user.aadhar_number|slice:"8:12" }}
+                    </div>
+                    <small class="text-muted">
+                        <i class="fa fa-lock"></i> Used for booking verification
+                    </small>
+                </div>
+                {% else %}
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-id-card me-2"></i>Aadhar Number
+                    </div>
+                    <div class="info-value">
+                        <span class="text-warning">
+                            <i class="fa fa-exclamation-triangle"></i> Not provided
+                        </span>
+                        <a href="{% url 'edit_profile' %}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="fa fa-plus"></i> Add
+                        </a>
+                    </div>
+                    <small class="text-muted">Required for booking confirmation</small>
+                </div>
+                {% endif %}
+
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-calendar-alt me-2"></i>Member Since
+                    </div>
+                    <div class="info-value">{{ user.created_at|date:"d M Y" }}</div>
+                </div>
+
+                {% if user.profile_photo %}
+                <div class="info-item">
+                    <div class="photo-upload-hint">
+                        <i class="fa fa-info-circle"></i>
+                        Photo last updated: {{ user.updated_at|date:"d M Y" }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <!-- Updated Action Buttons with Edit Profile -->
+                <div class="action-buttons">
+                    <a href="{% url 'edit_profile' %}" class="btn btn-warning w-100 mb-2">
+                        <i class="fa fa-edit me-2"></i>Edit Profile
+                    </a>
+                    <div class="d-flex gap-2 w-100">
+                        <a href="{% url 'packages' %}" class="btn btn-primary flex-grow-1">
+                            <i class="fa fa-search me-2"></i>Browse Packages
+                        </a>
+                        <a href="{% url 'my_bookings' %}" class="btn btn-outline-primary">
+                            <i class="fa fa-ticket-alt"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row">
+                <div class="col-6">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_bookings }}</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <div class="stat-number">{{ active_count }}</div>
+                        <div class="stat-label">Active Bookings</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Completion Card -->
+            <div class="profile-card mt-3">
+                <h6 class="mb-3">Profile Completion</h6>
+                <div class="progress mb-2" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar"
+                         style="width: {% if user.aadhar_number and user.profile_photo %}100{% elif user.aadhar_number or user.profile_photo %}50{% else %}25{% endif %}%;"
+                         aria-valuenow="{% if user.aadhar_number and user.profile_photo %}100{% elif user.aadhar_number or user.profile_photo %}50{% else %}25{% endif %}"
+                         aria-valuemin="0"
+                         aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">
+                    {% if user.aadhar_number and user.profile_photo %}
+                        <i class="fa fa-check-circle text-success"></i> Complete profile
+                    {% elif user.aadhar_number %}
+                        <i class="fa fa-exclamation-circle text-warning"></i> Add profile photo
+                    {% elif user.profile_photo %}
+                        <i class="fa fa-exclamation-circle text-warning"></i> Add Aadhar number
+                    {% else %}
+                        <i class="fa fa-exclamation-circle text-warning"></i> Complete your profile
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+
+        <!-- Bookings Column -->
+        <div class="col-lg-8">
+            <div class="profile-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fa fa-ticket-alt me-2 text-primary"></i>My Bookings
+                    </h4>
+                    <span class="badge bg-primary">{{ bookings.count }} Total</span>
+                </div>
+
+                {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="booking-table">
+                            <thead>
+                                <tr>
+                                    <th>Package</th>
+                                    <th>Travel Date</th>
+                                    <th>Status</th>
+                                    <th>Price</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ booking.package.title }}</strong>
+                                        <small class="d-block text-muted">
+                                            <i class="fa fa-map-marker-alt"></i> {{ booking.package.location }}
+                                        </small>
+                                        <small class="d-block text-muted">
+                                            <i class="fa fa-users"></i> {{ booking.persons }} Persons
+                                        </small>
+                                        {% if booking.passengers.exists %}
+                                        <small class="d-block text-success">
+                                            <i class="fa fa-check-circle"></i> {{ booking.passengers.count }} passenger details added
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ booking.travel_date|date:"d M Y" }}
+                                        <small class="d-block text-muted">
+                                            <i class="fa fa-clock"></i> {{ booking.travel_date|time }}
+                                        </small>
+                                    </td>
+                                    <!-- Enhanced Status TD with Waiting List Support -->
+                                    <td>
+                                        <span class="status-badge status-{{ booking.booking_status }}">
+                                            <i class="fa {% if booking.booking_status == 'waiting' %}fa-clock{% elif booking.booking_status == 'confirmed' %}fa-check-circle{% elif booking.booking_status == 'cancelled' %}fa-times-circle{% else %}fa-info-circle{% endif %} me-1"></i>
+
+                                            {% if booking.booking_status == 'waiting' %}
+                                                {% if booking.message %}
+                                                    Waiting List ({{ booking.message }})
+                                                {% else %}
+                                                    Waiting List
+                                                {% endif %}
+                                            {% else %}
+                                                {{ booking.get_booking_status_display }}
+                                            {% endif %}
+                                        </span>
+
+                                        {% if booking.booking_status == 'waiting' %}
+                                            <div class="waiting-info">
+                                                <i class="fa fa-clock-o"></i>
+                                                <strong>Position:
+                                                    {% if booking.waiting_list_position %}
+                                                        {{ booking.waiting_list_position }}
+                                                    {% elif booking.message %}
+                                                        {{ booking.message }}
+                                                    {% else %}
+                                                        Waiting
+                                                    {% endif %}
+                                                </strong>
+                                                <p class="small text-muted mb-0 mt-1">
+                                                    <i class="fa fa-info-circle"></i>
+                                                   You'll be automatically promoted when seats become available. If you are not promoted, your payment will be refunded within 7 days.
+                                                </p>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if booking.promoted_from_waiting %}
+                                            <div class="alert alert-success p-1 mt-1 mb-0" style="font-size: 11px;">
+                                                <i class="fa fa-star text-warning"></i>
+                                                <strong>Promoted from waiting list!</strong>
+                                                <span class="promotion-badge">NEW</span>
+                                            </div>
+                                        {% endif %}
+
+                                        <br>
+                                        <small class="text-muted">{{ booking.get_package_type_display }}</small>
+
+                                        {% if booking.booking_status == 'cancelled' %}
+                                            <div class="cancellation-info">
+                                                <i class="fa fa-info-circle"></i>
+                                                {% with refund=booking.invoice.invoice_items.cancellation_details %}
+                                                    {% if refund %}
+                                                        Refund: ₹{{ refund.refund_amount|floatformat:2 }}
+                                                    {% else %}
+                                                        Refund processing
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>₹{{ booking.total_price|floatformat:2 }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fa fa-{{ booking.travel_mode }}"></i>
+                                            {{ booking.get_travel_mode_display }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm" role="group">
+                                            <!-- Invoice Buttons -->
+                                            {% if booking.booking_status == 'cancelled' %}
+                                                <a href="{% url 'view_cancellation_invoice' booking.id %}"
+                                                   class="btn btn-outline-danger mb-1"
+                                                   target="_blank"
+                                                   title="View Cancellation Invoice">
+                                                    <i class="fa fa-file-invoice"></i> View
+                                                </a>
+                                                <a href="{% url 'download_cancellation_invoice' booking.id %}"
+                                                   class="btn btn-outline-warning mb-1"
+                                                   title="Download Cancellation Invoice">
+                                                    <i class="fa fa-download"></i> Download
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'view_invoice' booking.id %}"
+                                                   class="btn btn-outline-primary mb-1"
+                                                   target="_blank"
+                                                   title="View Invoice">
+                                                    <i class="fa fa-eye"></i> View
+                                                </a>
+                                                <a href="{% url 'download_invoice' booking.id %}"
+                                                   class="btn btn-outline-success mb-1"
+                                                   title="Download Invoice">
+                                                    <i class="fa fa-download"></i> Download
+                                                </a>
+                                            {% endif %}
+
+                                            <!-- Passenger Details Link -->
+                                            {% if booking.passengers.exists %}
+                                                <button type="button"
+                                                        class="btn btn-outline-info btn-sm mb-1"
+                                                        onclick="showPassengers({{ booking.id }})"
+                                                        title="View Passenger Details">
+                                                    <i class="fa fa-users"></i> Passengers
+                                                </button>
+                                            {% endif %}
+
+                                            <!-- Cancellation Policy Link - Only for non-cancelled, non-waiting bookings -->
+                                            {% if booking.booking_status != 'cancelled' and booking.booking_status != 'waiting' %}
+                                                <a href="{% url 'cancellation_policy' booking.id %}"
+                                                   class="btn btn-outline-info btn-sm"
+                                                   title="View Cancellation Policy">
+                                                    <i class="fa fa-file-text"></i> Policy
+                                                </a>
+                                            {% endif %}
+
+                                            <!-- Waiting List Specific Actions -->
+                                            {% if booking.booking_status == 'waiting' %}
+                                                <button type="button"
+                                                        class="btn btn-outline-secondary btn-sm"
+                                                        onclick="alert('You are on the waiting list and will be notified as soon as a seat becomes available. If your booking is not confirmed, your payment will be fully refunded within 7 days.')"
+                                                        title="Waiting List Info">
+                                                    <i class="fa fa-clock-o"></i> Waiting
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Booking Summary with Waiting List Count -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card bg-light summary-card">
+                                <div class="card-body text-center">
+                                    <h6>Confirmed</h6>
+                                    <h3 class="text-success">{{ confirmed_count }}</h3>
+                                    <small class="text-muted">{{ confirmed_count }} booking{{ confirmed_count|pluralize }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light summary-card">
+                                <div class="card-body text-center">
+                                    <h6>Pending</h6>
+                                    <h3 class="text-warning">{{ pending_count }}</h3>
+                                    <small class="text-muted">{{ pending_count }} booking{{ pending_count|pluralize }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light summary-card">
+                                <div class="card-body text-center">
+                                    <h6>Waiting</h6>
+                                    <h3 class="text-info">{{ waiting_count }}</h3>
+                                    <small class="text-muted">{{ waiting_count }} booking{{ waiting_count|pluralize }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light summary-card">
+                                <div class="card-body text-center">
+                                    <h6>Cancelled</h6>
+                                    <h3 class="text-danger">{{ cancelled_count }}</h3>
+                                    <small class="text-muted">{{ cancelled_count }} booking{{ cancelled_count|pluralize }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="empty-state">
+                        <i class="fa fa-ticket-alt"></i>
+                        <h4>No Bookings Yet</h4>
+                        <p>You haven't made any bookings. Start your journey with us today!</p>
+                        <a href="{% url 'packages' %}" class="btn btn-primary btn-lg">
+                            <i class="fa fa-search me-2"></i>Browse Packages
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="profile-card mt-4">
+                <h5 class="mb-3">
+                    <i class="fa fa-link me-2 text-primary"></i>Quick Actions
+                </h5>
+                <div class="row">
+                    <div class="col-md-3 col-6 mb-2">
+                        <a href="{% url 'packages' %}" class="btn btn-outline-primary w-100">
+                            <i class="fa fa-suitcase"></i>
+                            <small>Packages</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6 mb-2">
+                        <a href="{% url 'my_bookings' %}" class="btn btn-outline-info w-100">
+                            <i class="fa fa-ticket"></i>
+                            <small>Bookings</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6 mb-2">
+                        <a href="{% url 'gallery' %}" class="btn btn-outline-success w-100">
+                            <i class="fa fa-image"></i>
+                            <small>Gallery</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6 mb-2">
+                        <a href="{% url 'contact' %}" class="btn btn-outline-warning w-100">
+                            <i class="fa fa-headset"></i>
+                            <small>Support</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Need Help Card -->
+            <div class="profile-card mt-4 bg-light">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fa fa-question-circle fa-3x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-1">Need Help with Your Booking?</h6>
+                        <p class="mb-2 small">Contact our 24/7 customer support</p>
+                        <a href="{% url 'contact' %}" class="btn btn-sm btn-primary">
+                            <i class="fa fa-headset me-1"></i>Contact Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Passenger Details Modal -->
+<div class="modal fade" id="passengerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Passenger Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="passengerModalBody">
+                <!-- Passenger details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add tooltips to action buttons
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Function to show passenger details
+function showPassengers(bookingId) {
+    // You can implement this to fetch and display passenger details
+    alert('Passenger details feature coming soon!');
+}
+
+// Function to handle any confirmation dialogs
+function confirmAction(message) {
+    return confirm(message);
+}
+
+// Auto-dismiss alerts after 5 seconds
+setTimeout(function() {
+    var alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        var bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+    });
+}, 5000);
+
+// Refresh waiting list positions every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

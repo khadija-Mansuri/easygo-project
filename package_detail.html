@@ -1,0 +1,1059 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ package.title }} - Travela{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        font-size: 16px;
+        padding: 8px 16px;
+        border-radius: 50px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .status-expired {
+        background: #dc3545;
+        color: white;
+    }
+    .status-closing-soon {
+        background: #ffc107;
+        color: #000;
+    }
+    .status-available {
+        background: #28a745;
+        color: white;
+    }
+    .countdown-timer {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .countdown-number {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0 10px;
+    }
+    .countdown-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+    .seat-warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .gallery-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .gallery-item:hover img {
+        transform: scale(1.1);
+    }
+    .gallery-item:hover .gallery-overlay {
+        opacity: 1;
+    }
+    .gallery-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .feature-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        transition: transform 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .feature-icon {
+        font-size: 32px;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+    .day-plan-card {
+        border-left: 4px solid #007bff;
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+    }
+    .day-plan-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .meal-badge {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+    .meal-badge i {
+        margin-right: 5px;
+    }
+    .sidebar-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 100px;
+    }
+    .price-tag {
+        font-size: 36px;
+        font-weight: bold;
+        color: #007bff;
+    }
+    .price-tag small {
+        font-size: 14px;
+        font-weight: normal;
+        color: #6c757d;
+    }
+    .btn-book {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        padding: 15px;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    .btn-book:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+    }
+    .btn-book:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .lightbox {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .lightbox.active {
+        display: flex;
+    }
+    .lightbox img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 10px;
+    }
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+    }
+    /* PDF Download Styles */
+    .pdf-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+    }
+    .pdf-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 30px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        page-break-inside: avoid;
+    }
+    .pdf-header h1 {
+        font-size: 32px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    .pdf-header .package-meta {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 5px 0;
+    }
+    .pdf-header .price {
+        font-size: 24px;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+    .pdf-main-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        page-break-inside: avoid;
+    }
+    .pdf-section {
+        margin-bottom: 30px;
+        page-break-inside: avoid;
+    }
+    .pdf-section-title {
+        font-size: 24px;
+        color: #007bff;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #007bff;
+        font-weight: bold;
+    }
+    .pdf-day-card {
+        page-break-inside: avoid;
+        margin-bottom: 30px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 25px;
+        background: #f9f9f9;
+    }
+    .pdf-day-title {
+        color: #007bff;
+        font-size: 22px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    .pdf-day-description {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .pdf-hotel-info {
+        background: #e8f4f8;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+    .pdf-meals {
+        margin: 15px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .pdf-meal-badge {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 5px 15px;
+        border-radius: 25px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid #c8e6c9;
+    }
+    .pdf-gallery {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .pdf-gallery img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    .pdf-inclusions-exclusions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin: 30px 0;
+        page-break-inside: avoid;
+    }
+    .pdf-inclusions, .pdf-exclusions {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    .pdf-inclusions h3, .pdf-exclusions h3 {
+        color: #28a745;
+        margin-bottom: 15px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .pdf-exclusions h3 {
+        color: #dc3545;
+    }
+    .pdf-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .pdf-list li {
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #555;
+    }
+    .pdf-list li i {
+        margin-right: 8px;
+        width: 16px;
+    }
+    .pdf-terms {
+        background: #f1f1f1;
+        padding: 20px;
+        border-radius: 8px;
+        page-break-inside: avoid;
+    }
+    .pdf-terms h3 {
+        color: #007bff;
+        margin-bottom: 15px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .pdf-footer {
+        text-align: center;
+        margin-top: 40px;
+        padding: 20px;
+        border-top: 2px solid #007bff;
+        font-size: 12px;
+        color: #666;
+        page-break-inside: avoid;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            background: white;
+        }
+        .pdf-container {
+            padding: 0;
+            max-width: 100%;
+        }
+        .pdf-day-card {
+            break-inside: avoid;
+        }
+        .pdf-gallery {
+            break-inside: avoid;
+        }
+    }
+    /* PDF Generation Container */
+    #pdf-content {
+        background: white;
+        padding: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Waiting List Specific Styles */
+    .waiting-info-box {
+        background: #e1f5fe;
+        border-left: 4px solid #0288d1;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .waiting-badge {
+        background: #17a2b8;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="container-fluid bg-breadcrumb no-print">
+    <div class="container text-center py-5" style="max-width: 900px;">
+        <h3 class="text-white display-3 mb-4">{{ package.title }}</h3>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'packages' %}">Packages</a></li>
+            <li class="breadcrumb-item active text-white">Package Details</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 no-print" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- PDF Download Button -->
+        <div class="text-end mb-4 no-print">
+            <button onclick="generatePDF()" class="btn btn-primary btn-lg shadow-sm">
+                <i class="fa fa-file-pdf me-2"></i>Download Itinerary PDF
+            </button>
+            <button onclick="printPage()" class="btn btn-outline-primary btn-lg shadow-sm ms-2">
+                <i class="fa fa-print me-2"></i>Print
+            </button>
+        </div>
+
+        <!-- Hidden PDF Content -->
+        <div id="pdf-content" style="display: none;">
+            <!-- PDF Header -->
+            <div class="pdf-header">
+                <h1>{{ package.title }}</h1>
+                <div class="package-meta">
+                    <i class="fa fa-map-marker-alt"></i> {{ package.location }} |
+                    <i class="fa fa-clock"></i> {{ package.duration }} |
+                    <i class="fa fa-tag"></i> {{ package.category }}
+                </div>
+                <div class="package-meta">
+                    <i class="fa fa-calendar"></i> Start Date: {{ package.triptime|date:"d M Y" }}
+                </div>
+                <div class="price">
+                    ₹{{ package.base_price }} <small style="font-size: 16px;">per person</small>
+                </div>
+            </div>
+
+            <!-- Main Image -->
+            <img src="{{ package.image.url }}" class="pdf-main-image" alt="{{ package.title }}">
+
+            <!-- Description -->
+            <div class="pdf-section">
+                <h2 class="pdf-section-title">Description</h2>
+                <p style="font-size: 14px; line-height: 1.8; color: #333;">{{ package.description }}</p>
+            </div>
+
+            <!-- Day Plans -->
+            {% if day_plans %}
+            <div class="pdf-section">
+                <h2 class="pdf-section-title">Detailed Itinerary</h2>
+                {% for plan in day_plans %}
+                <div class="pdf-day-card">
+                    <h3 class="pdf-day-title">Day {{ plan.day_number }}: {{ plan.title }}</h3>
+                    <p class="pdf-day-description">{{ plan.description }}</p>
+
+                    {% if plan.hotel_name %}
+                    <div class="pdf-hotel-info">
+                        <i class="fa fa-hotel" style="color: #007bff; margin-right: 8px;"></i>
+                        <strong>Accommodation:</strong> {{ plan.hotel_name }}
+                    </div>
+                    {% endif %}
+
+                    <div class="pdf-meals">
+                        {% if plan.breakfast %}
+                        <span class="pdf-meal-badge"><i class="fa fa-coffee"></i> Breakfast</span>
+                        {% endif %}
+                        {% if plan.lunch %}
+                        <span class="pdf-meal-badge"><i class="fa fa-utensils"></i> Lunch</span>
+                        {% endif %}
+                        {% if plan.dinner %}
+                        <span class="pdf-meal-badge"><i class="fa fa-moon"></i> Dinner</span>
+                        {% endif %}
+                    </div>
+
+                    {% if plan.photos.all %}
+                    <div class="pdf-gallery">
+                        {% for photo in plan.photos.all|slice:":4" %}
+                        <img src="{{ photo.image.url }}" alt="Day {{ plan.day_number }} photo">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Inclusions/Exclusions -->
+            <div class="pdf-inclusions-exclusions">
+                <div class="pdf-inclusions">
+                    <h3><i class="fa fa-check-circle" style="color: #28a745;"></i> Inclusions</h3>
+                    <ul class="pdf-list">
+                        <li><i class="fa fa-check" style="color: #28a745;"></i> Accommodation as per itinerary</li>
+                        <li><i class="fa fa-check" style="color: #28a745;"></i> All meals as mentioned</li>
+                        <li><i class="fa fa-check" style="color: #28a745;"></i> Transportation during tour</li>
+                        <li><i class="fa fa-check" style="color: #28a745;"></i> Expert tour guide</li>
+                        <li><i class="fa fa-check" style="color: #28a745;"></i> All permits and entry fees</li>
+                        <li><i class="fa fa-check" style="color: #28a745;"></i> Travel insurance</li>
+                    </ul>
+                </div>
+                <div class="pdf-exclusions">
+                    <h3><i class="fa fa-times-circle" style="color: #dc3545;"></i> Exclusions</h3>
+                    <ul class="pdf-list">
+                        <li><i class="fa fa-times" style="color: #dc3545;"></i> Personal expenses</li>
+                        <li><i class="fa fa-times" style="color: #dc3545;"></i> Tips and gratuities</li>
+                        <li><i class="fa fa-times" style="color: #dc3545;"></i> Additional activities</li>
+                        <li><i class="fa fa-times" style="color: #dc3545;"></i> Visa fees (if applicable)</li>
+                        <li><i class="fa fa-times" style="color: #dc3545;"></i> Airfare (unless specified)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="pdf-terms">
+                <h3><i class="fa fa-file-text" style="color: #007bff;"></i> Terms & Conditions</h3>
+                <ul class="pdf-list" style="margin-bottom: 0;">
+                    <li><i class="fa fa-circle" style="font-size: 6px; color: #007bff;"></i> Booking is subject to availability</li>
+                    <li><i class="fa fa-circle" style="font-size: 6px; color: #007bff;"></i> Cancellation policy applies as per company rules</li>
+                    <li><i class="fa fa-circle" style="font-size: 6px; color: #007bff;"></i> Valid government ID required at check-in</li>
+                    <li><i class="fa fa-circle" style="font-size: 6px; color: #007bff;"></i> Rates subject to change without notice</li>
+                </ul>
+            </div>
+
+            <!-- Footer -->
+            <div class="pdf-footer">
+                <p style="margin-bottom: 5px;">© 2024 Travela Tours & Travels. All rights reserved.</p>
+                <p style="margin-bottom: 0; font-size: 11px;">This is a computer generated itinerary - valid for travel purposes</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Content Column -->
+            <div class="col-lg-8">
+                <!-- Package Image with Status -->
+                <div class="position-relative mb-4">
+                    <img src="{{ package.image.url }}" class="img-fluid rounded-4 w-100" alt="{{ package.title }}" style="height: 450px; object-fit: cover;">
+
+                    <!-- Trip Status Badge -->
+                    {% with status=package.get_trip_status %}
+                    <div class="position-absolute top-0 start-0 m-4">
+                        <span class="badge status-badge status-{{ status.status }}">
+                            <i class="fa {{ status.icon }} me-2"></i>{{ status.message }}
+                        </span>
+                    </div>
+                    {% endwith %}
+
+                    <!-- Countdown Timer for Closing Soon -->
+                    {% if not package.is_trip_expired and package.available_seats > 0 %}
+                        {% with days_left=package.triptime|timeuntil %}
+                        <div class="position-absolute top-0 end-0 m-4">
+                            <span class="badge bg-dark text-white px-3 py-2">
+                                <i class="fa fa-clock me-2"></i>{{ days_left }} left
+                            </span>
+                        </div>
+                        {% endwith %}
+                    {% endif %}
+                </div>
+
+                <!-- Package Title and Quick Info -->
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h1 class="display-6 fw-bold mb-2">{{ package.title }}</h1>
+                        <div class="d-flex gap-3 text-muted">
+                            <span><i class="fa fa-map-marker-alt text-primary me-1"></i>{{ package.location }}</span>
+                            <span><i class="fa fa-clock text-primary me-1"></i>{{ package.duration }}</span>
+                            <span><i class="fa fa-tag text-primary me-1"></i>{{ package.category }}</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <h2 class="text-primary mb-0">₹{{ package.base_price }}</h2>
+                        <small class="text-muted">per person</small>
+                    </div>
+                </div>
+
+                <!-- Key Features -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="feature-card">
+                            <i class="fa fa-clock feature-icon"></i>
+                            <h6 class="mb-0">{{ package.duration }}</h6>
+                            <small class="text-muted">Duration</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="feature-card">
+                            <i class="fa fa-users feature-icon"></i>
+                            <h6 class="mb-0">{{ package.max_persons }}</h6>
+                            <small class="text-muted">Max Persons</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+    <div class="feature-card">
+        <i class="fa {% if package.available_seats > 0 %}fa-chair{% else %}fa-clock{% endif %} feature-icon"></i>
+
+        <h6 class="mb-0">
+            {% if package.available_seats > 0 %}
+                <span class="{% if package.available_seats < 10 %}text-danger{% endif %}">
+                    {{ package.available_seats }}
+                </span>
+            {% else %}
+                <span class="text-warning">
+                    {# Simple count of all bookings + 1 #}
+                    WL{{ package.booking_set.count|add:1 }}
+                </span>
+            {% endif %}
+        </h6>
+
+        <small class="text-muted">
+            {% if package.available_seats > 0 %}
+                Available Seats
+            {% else %}
+                Next Waiting Pos.
+            {% endif %}
+        </small>
+    </div>
+</div>
+<!--                    <div class="col-md-3 col-6">-->
+<!--                        <div class="feature-card">-->
+<!--                            <i class="fa fa-chair feature-icon"></i>-->
+<!--                            <h6 class="mb-0 {% if package.available_seats < 10 %}text-danger{% endif %}">{{ package.available_seats }}</h6>-->
+<!--                            <small class="text-muted">Available Seats</small>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                    <div class="col-md-3 col-6">
+                        <div class="feature-card">
+                            <i class="fa fa-calendar feature-icon"></i>
+                            <h6 class="mb-0">{{ package.triptime|date:"d M" }}</h6>
+                            <small class="text-muted">Start Date</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="bg-white rounded-4 p-4 mb-4 shadow-sm">
+                    <h4 class="mb-3"><i class="fa fa-info-circle text-primary me-2"></i>Description</h4>
+                    <p class="text-muted mb-0" style="line-height: 1.8;">{{ package.description }}</p>
+                </div>
+
+                <!-- Day Plans / Itinerary -->
+                {% if day_plans %}
+                <div class="bg-white rounded-4 p-4 mb-4 shadow-sm">
+                    <h4 class="mb-4"><i class="fa fa-map text-primary me-2"></i>Detailed Itinerary</h4>
+
+                    {% for plan in day_plans %}
+                    <div class="day-plan-card" id="day-{{ plan.day_number }}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="text-primary mb-0">
+                                <span class="badge bg-primary me-2">Day {{ plan.day_number }}</span>
+                                {{ plan.title }}
+                            </h5>
+                        </div>
+
+                        <p class="text-muted mb-3">{{ plan.description }}</p>
+
+                        <!-- Hotel Information -->
+                        {% if plan.hotel_name %}
+                        <div class="mb-3 p-2 bg-light rounded">
+                            <i class="fa fa-hotel text-primary me-2"></i>
+                            <strong>Accommodation:</strong> {{ plan.hotel_name }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Meals -->
+                        <div class="mb-3">
+                            <strong class="d-block mb-2"><i class="fa fa-utensils text-primary me-2"></i>Meals Included:</strong>
+                            <div>
+                                {% if plan.breakfast %}
+                                <span class="meal-badge"><i class="fa fa-coffee"></i>Breakfast</span>
+                                {% endif %}
+                                {% if plan.lunch %}
+                                <span class="meal-badge"><i class="fa fa-utensils"></i>Lunch</span>
+                                {% endif %}
+                                {% if plan.dinner %}
+                                <span class="meal-badge"><i class="fa fa-moon"></i>Dinner</span>
+                                {% endif %}
+                                {% if not plan.breakfast and not plan.lunch and not plan.dinner %}
+                                <span class="text-muted small">No meals included (self-arranged)</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Day Photos -->
+                        {% if plan.photos.all %}
+                        <div class="mt-3">
+                            <strong class="d-block mb-2"><i class="fa fa-images text-primary me-2"></i>Gallery:</strong>
+                            <div class="gallery-grid">
+                                {% for photo in plan.photos.all %}
+                                <div class="gallery-item" onclick="openLightbox('{{ photo.image.url }}')">
+                                    <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Day photo' }}">
+                                    <div class="gallery-overlay">
+                                        <i class="fa fa-search-plus text-white fa-2x"></i>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Inclusions/Exclusions -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 p-4 shadow-sm h-100">
+                            <h5 class="text-success mb-3"><i class="fa fa-check-circle me-2"></i>Inclusions</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fa fa-check text-success me-2"></i>Accommodation as per itinerary</li>
+                                <li class="mb-2"><i class="fa fa-check text-success me-2"></i>All meals as mentioned</li>
+                                <li class="mb-2"><i class="fa fa-check text-success me-2"></i>Transportation during tour</li>
+                                <li class="mb-2"><i class="fa fa-check text-success me-2"></i>Expert tour guide</li>
+                                <li class="mb-2"><i class="fa fa-check text-success me-2"></i>All permits and entry fees</li>
+                                <li class="mb-2"><i class="fa fa-check text-success me-2"></i>Travel insurance</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-4 p-4 shadow-sm h-100">
+                            <h5 class="text-danger mb-3"><i class="fa fa-times-circle me-2"></i>Exclusions</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fa fa-times text-danger me-2"></i>Personal expenses</li>
+                                <li class="mb-2"><i class="fa fa-times text-danger me-2"></i>Tips and gratuities</li>
+                                <li class="mb-2"><i class="fa fa-times text-danger me-2"></i>Additional activities</li>
+                                <li class="mb-2"><i class="fa fa-times text-danger me-2"></i>Visa fees (if applicable)</li>
+                                <li class="mb-2"><i class="fa fa-times text-danger me-2"></i>Airfare (unless specified)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="bg-light rounded-4 p-4">
+                    <h5 class="mb-3"><i class="fa fa-file-text text-primary me-2"></i>Terms & Conditions</h5>
+                    <div class="small text-muted">
+                        <p class="mb-2"><i class="fa fa-circle me-2" style="font-size: 6px; vertical-align: middle;"></i>Booking is subject to availability</p>
+                        <p class="mb-2"><i class="fa fa-circle me-2" style="font-size: 6px; vertical-align: middle;"></i>Cancellation policy applies as per company rules</p>
+                        <p class="mb-2"><i class="fa fa-circle me-2" style="font-size: 6px; vertical-align: middle;"></i>Valid government ID required at check-in</p>
+                        <p class="mb-2"><i class="fa fa-circle me-2" style="font-size: 6px; vertical-align: middle;"></i>Rates subject to change without notice</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Column -->
+            <div class="col-lg-4 no-print">
+                <div class="sidebar-card">
+                    <h4 class="mb-4">Booking Summary</h4>
+
+                    <!-- Price Box -->
+                    <div class="text-center mb-4">
+                        ₹{{ package.base_price }}<small>/person</small>
+                    </div>
+
+                    <!-- Quick Info -->
+                    <div class="bg-light p-3 rounded-3 mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fa fa-calendar text-primary me-2"></i>Start Date:</span>
+                            <strong>{{ package.triptime|date:"d M Y" }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fa fa-clock text-primary me-2"></i>Duration:</span>
+                            <strong>{{ package.duration }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+    <span><i class="fa fa-users text-primary me-2"></i>Available Seats:</span>
+    <strong class="{% if package.available_seats < 10 %}text-danger{% endif %}">
+        {% if package.available_seats > 0 %}
+            {{ package.available_seats }}
+        {% else %}
+            <span class="text-warning">WL{{ package.booking_set.count|add:1 }}</span>
+        {% endif %}
+    </strong>
+</div>
+
+
+<!--                        <div class="d-flex justify-content-between">-->
+<!--                            <span><i class="fa fa-users text-primary me-2"></i>Available Seats:</span>-->
+<!--                            <strong class="{% if package.available_seats < 10 %}text-danger{% endif %}">{{ package.available_seats }}</strong>-->
+<!--                        </div>-->
+                    </div>
+
+                    <!-- Trip Status Specific Alerts -->
+                    {% if package.is_trip_expired %}
+                    <div class="alert alert-danger text-center mb-4">
+                        <i class="fa fa-calendar-times fa-3x mb-3"></i>
+                        <h5 class="alert-heading">Trip Departed</h5>
+                        <p class="mb-0">This trip started on {{ package.triptime|date:"d M Y, h:i A" }}</p>
+                        <hr>
+                        <p class="small mb-0">No longer available for booking</p>
+                    </div>
+
+                    <!-- CORRECTED WAITING LIST ALERT SECTION -->
+                    {% elif package.available_seats <= 0 %}
+                    <div class="alert alert-info text-center mb-4 border-info">
+                        <i class="fa fa-users fa-3x mb-3 text-info"></i>
+                        <h5 class="alert-heading">Package is Full</h5>
+                        <p class="mb-2">This trip is currently fully booked.</p>
+
+                        <!-- CORRECTED WAY TO COUNT WAITING LIST BOOKINGS -->
+                        {% with waiting_count=package.booking_set.all %}
+                            {% with waiting_list=waiting_count %}
+                                {% with waiting_count_value=waiting_list|dictsortreversed:"booking_status" %}
+                                    {% with actual_count=waiting_count_value|length %}
+                                    <p class="mb-3">
+                                        <strong>{{ actual_count }}</strong> people currently in waiting list
+                                    </p>
+                                    {% endwith %}
+                                {% endwith %}
+                            {% endwith %}
+                        {% endwith %}
+
+                        <a href="{% url 'booking_process' package.id %}" class="btn btn-info btn-sm w-100 text-white fw-bold">
+                            <i class="fa fa-plus-circle me-1"></i>Join the Waiting List
+                        </a>
+                        <hr>
+                        <p class="small mb-0">
+                            <i class="fa fa-bell me-1"></i>
+                            We will notify you automatically if a seat opens up and promote you in order.
+                        </p>
+                    </div>
+                    {% else %}
+                        <!-- Seat Availability Warning -->
+                        {% if package.available_seats <= 5 %}
+                        <div class="seat-warning">
+                            <i class="fa fa-exclamation-circle text-warning me-2"></i>
+                            <strong>Only {{ package.available_seats }} seats left!</strong>
+                            <p class="small text-muted mb-0 mt-1">Book now to avoid disappointment</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Countdown Timer for Urgency -->
+                        {% with days_until=package.triptime|timeuntil %}
+                        {% if days_until != '0 minutes' %}
+                        <div class="countdown-timer mb-4">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div>
+                                    <div class="countdown-number">{{ days_remaining|stringformat:"02d" }}</div>
+                                    <div class="countdown-label">Days</div>
+                                </div>
+                                <div class="mx-2">:</div>
+                                <div>
+                                    <div class="countdown-number">{{ hours_remaining|stringformat:"02d" }}</div>
+                                    <div class="countdown-label">Hours</div>
+                                </div>
+                            </div>
+                            <small class="opacity-75">Time remaining to book</small>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+
+                        <!-- Booking Buttons -->
+                        {% if request.session.user_id %}
+                            <a href="{% url 'booking_process' package.id %}" class="btn btn-book btn-lg w-100 mb-3">
+                                <i class="fa fa-book me-2"></i>Book This Package Now
+                            </a>
+                        {% else %}
+                            <a href="{% url 'login' %}?next={% url 'booking_process' package.id %}" class="btn btn-book btn-lg w-100 mb-3">
+                                <i class="fa fa-sign-in me-2"></i>Login to Book
+                            </a>
+                        {% endif %}
+
+                        <!-- Payment Methods -->
+                        <div class="text-center">
+                            <small class="text-muted d-block mb-2">Secure payment options:</small>
+                            <div class="d-flex justify-content-center gap-2">
+                                <i class="fa fa-cc-visa fa-2x text-primary"></i>
+                                <i class="fa fa-cc-mastercard fa-2x text-danger"></i>
+                                <i class="fa fa-cc-amex fa-2x text-info"></i>
+                                <i class="fa fa-cc-paypal fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Need Help Section -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h6><i class="fa fa-question-circle text-primary me-2"></i>Need Help?</h6>
+                        <p class="small text-muted mb-2">Our travel experts are here to assist you</p>
+                        <a href="{% url 'contact' %}" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fa fa-headset me-2"></i>Contact Support
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Similar Packages -->
+                {% if similar_packages %}
+                <div class="bg-white rounded-4 p-4 mt-4 shadow-sm">
+                    <h5 class="mb-3">Similar Packages</h5>
+                    {% for similar in similar_packages|slice:":3" %}
+                    <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                        <img src="{{ similar.image.url }}" class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h6 class="mb-1">{{ similar.title|truncatechars:20 }}</h6>
+                            <small class="text-primary">₹{{ similar.base_price }}/person</small>
+                        </div>
+                        <a href="{% url 'package_detail' similar.id %}" class="btn btn-sm btn-outline-primary ms-auto">
+                            <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox for Image Gallery -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-img" src="" alt="Gallery Image">
+</div>
+
+<!-- Include html2pdf library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- JavaScript -->
+<script>
+// Lightbox functionality
+function openLightbox(imageUrl) {
+    document.getElementById('lightbox').classList.add('active');
+    document.getElementById('lightbox-img').src = imageUrl;
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+}
+
+// Close lightbox with ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeLightbox();
+    }
+});
+
+// PDF Generation Function
+function generatePDF() {
+    const element = document.getElementById('pdf-content');
+    const downloadBtn = document.querySelector('.btn-primary');
+
+    // Show the PDF content temporarily
+    element.style.display = 'block';
+
+    // Store original button text
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Generating PDF...';
+    downloadBtn.disabled = true;
+
+    const opt = {
+        margin: [0.3, 0.3, 0.3, 0.3],
+        filename: '{{ package.title|slugify }}_itinerary.pdf',
+        image: {
+            type: 'jpeg',
+            quality: 0.95
+        },
+        html2canvas: {
+            scale: 1.5,
+            useCORS: true,
+            logging: false,
+            letterRendering: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff'
+        },
+        jsPDF: {
+            unit: 'in',
+            format: 'a4',
+            orientation: 'portrait',
+            compress: true
+        },
+        pagebreak: {
+            mode: ['css', 'legacy'],
+            before: '.page-break',
+            after: ['#pdf-footer'],
+            avoid: ['img', '.pdf-day-card', '.pdf-inclusions-exclusions', '.pdf-terms']
+        }
+    };
+
+    // Generate and save PDF
+    html2pdf().from(element).set(opt).save().then(() => {
+        element.style.display = 'none';
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+    }).catch(error => {
+        console.error('PDF Generation Error:', error);
+        alert('Error generating PDF. Please try again.');
+        element.style.display = 'none';
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+    });
+}
+
+// Print function
+function printPage() {
+    const element = document.getElementById('pdf-content');
+    element.style.display = 'block';
+    const originalTitle = document.title;
+    document.title = '{{ package.title }} - Travel Itinerary';
+    window.print();
+    element.style.display = 'none';
+    document.title = originalTitle;
+}
+
+// Auto-refresh seat availability every 30 seconds
+{% if not package.is_trip_expired %}
+setInterval(function() {
+    fetch('{% url "check_package_availability" package.id %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.available_seats !== {{ package.available_seats }}) {
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}, 30000);
+{% endif %}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Function to check waiting list status
+function checkWaitingListStatus() {
+    fetch('/check-waiting-list/{{ package.id }}/')
+        .then(response => response.json())
+        .then(data => {
+            const waitingCountElement = document.getElementById('waitingCount');
+            if (waitingCountElement) {
+                waitingCountElement.textContent = data.waiting_count;
+            }
+        })
+        .catch(error => console.error('Error checking waiting list:', error));
+}
+
+// Check waiting list status every 30 seconds
+{% if package.available_seats <= 0 %}
+checkWaitingListStatus();
+setInterval(checkWaitingListStatus, 30000);
+{% endif %}
+</script>
+{% endblock %}

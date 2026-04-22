@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookings - Travela{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+    }
+    .booking-card:hover {
+        transform: translateY(-5px);
+    }
+    .booking-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+    }
+    .booking-body {
+        padding: 20px;
+    }
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .status-confirmed { background: #28a745; color: white; }
+    .status-pending { background: #ffc107; color: black; }
+    .status-cancelled { background: #dc3545; color: white; }
+    .cancel-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .cancel-btn:hover:not(:disabled) {
+        background: #c82333;
+    }
+    .cancel-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+    }
+    .refund-info {
+        background: #e8f4fd;
+        border-left: 4px solid #17a2b8;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-breadcrumb">
+    <div class="container text-center py-5" style="max-width: 900px;">
+        <h3 class="text-white display-3 mb-4">My Bookings</h3>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active text-white">My Bookings</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <h2 class="mb-4">Your Trip Bookings</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if bookings %}
+            <div class="row">
+                {% for booking in bookings %}
+                <div class="col-md-6">
+                    <div class="booking-card" id="booking-{{ booking.id }}">
+                        <div class="booking-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Booking #{{ booking.id }}</h5>
+                                <span class="status-badge status-{{ booking.booking_status }}">
+                                    {{ booking.get_booking_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="booking-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>{{ booking.package.title }}</h6>
+                                    <p class="text-muted mb-2">
+                                        <i class="fa fa-map-marker-alt"></i> {{ booking.package.location }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="fa fa-users"></i> {{ booking.persons }} Persons
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="fa fa-{{ booking.travel_mode }}"></i> {{ booking.get_travel_mode_display }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <i class="fa fa-calendar"></i> Travel Date:<br>
+                                        <strong>{{ booking.travel_date }}</strong>
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="fa fa-tag"></i> Package Type:<br>
+                                        <span class="badge bg-{% if booking.package_type == 'premium' %}warning{% elif booking.package_type == 'vip' %}danger{% else %}secondary{% endif %}">
+                                            {{ booking.get_package_type_display }}
+                                        </span>
+                                    </p>
+                                    <p class="h5 text-success mb-3">
+                                        <i class="fa fa-rupee-sign"></i> ₹{{ booking.total_price }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+      {% if booking.booking_status == 'cancelled' %}
+    <div class="refund-info">
+        <i class="fa fa-info-circle"></i>
+        This booking has been cancelled. Refund will be processed within 5-7 business days.
+    </div>
+{% else %}
+    <a href="{% url 'cancellation_policy' booking.id %}" class="btn btn-info" style="margin-right: 10px;">
+        <i class="fa fa-file-text"></i> View Cancellation Policy
+    </a>
+    <button class="cancel-btn" onclick="cancelBooking({{ booking.id }})">
+        Cancel Booking
+    </button>
+{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <img src="{% static 'img/no-bookings.svg' %}" alt="No bookings" style="max-width: 200px;">
+                <h4 class="mt-4">No Bookings Found</h4>
+                <p>You haven't made any bookings yet. Check out our amazing packages!</p>
+                <a href="{% url 'packages' %}" class="btn btn-primary">Browse Packages</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking?\n\nNote: This will release the seats for other travelers. Please check the cancellation policy first.')) {
+        return;
+    }
+
+    fetch(`/cancel-booking/${bookingId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            if (data.refund_info) {
+                alert(`Refund Details:\nAmount: ₹${data.refund_info.refund_amount}\nPercentage: ${data.refund_info.refund_percentage}%\n${data.refund_info.refund_message}`);
+            }
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}
